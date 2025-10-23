@@ -1,5 +1,9 @@
+from __future__ import annotations
+
 from typing import Dict, Callable, Optional, List
+
 import pygame
+
 from game.utils import WIDTH, HEIGHT, FONT_SIZE, load_image
 from game.utils.fonts import load_font
 

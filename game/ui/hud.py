@@ -1,4 +1,7 @@
+from __future__ import annotations
+
 import pygame
+
 from game.utils import FONT_SIZE, WIDTH
 from game.utils.fonts import load_font
 

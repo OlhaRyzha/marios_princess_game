@@ -1,9 +1,13 @@
+from __future__ import annotations
+
 import math
 import os
 import random
 from dataclasses import dataclass
 from typing import Dict, Iterable, List, Mapping, Optional, Set, Tuple, cast
+
 import pygame
+
 from game.data.locations import LocationName, LOCATION_ORDER
 from game.utils import (
     ASSETS_DIR,
@@ -18,6 +22,7 @@ from game.utils import (
 from game.utils.fonts import load_font
 
 MapEvent = Optional[Tuple[str, Optional[LocationName]]]
+
 
 LocationTitlePair = Tuple[LocationName, str]
 
@@ -53,6 +58,7 @@ FOG_INTENSITY: Dict[str, float] = {
     "idle": 0.78,
     "locked": 0.55,
 }
+
 
 FALLBACK_BG = os.path.join(BACKGROUNDS_DIR, "mushroom_woods", "sky.png")
 MAP_IMAGE = os.path.join(MAP_DIR, "map.png")
@@ -174,6 +180,7 @@ def _load_bg() -> pygame.Surface:
                 return pygame.transform.smoothscale(img, (WIDTH, HEIGHT))
             except Exception:
                 continue
+
     surf = pygame.Surface((WIDTH, HEIGHT))
     surf.fill((140, 160, 220))
     return surf
@@ -192,11 +199,13 @@ def _load_image(path: Optional[str]) -> Optional[pygame.Surface]:
 
 
 def _circle_image(img: pygame.Surface, radius: int) -> pygame.Surface:
+
     size = radius * 2
     img = pygame.transform.smoothscale(img, (size, size))
     circle = pygame.Surface((size, size), pygame.SRCALPHA)
     pygame.draw.circle(circle, (255, 255, 255, 255), (radius, radius), radius)
     circle.blit(img, (0, 0), special_flags=pygame.BLEND_RGBA_MIN)
+
     pygame.draw.circle(circle, (255, 255, 255), (radius, radius), radius, 3)
     return circle
 
@@ -508,6 +517,7 @@ class WorldMapScene:
         return None
 
     def _draw_links(self, surface: pygame.Surface) -> None:
+
         if len(self.locations) < 2:
             return
 
@@ -650,6 +660,7 @@ class WorldMapScene:
             y += self.font_card.get_height() + 4
 
     def draw(self, surface: pygame.Surface, *, overlay: bool) -> None:
+
         surface.blit(self.bg, (0, 0))
 
         if overlay:

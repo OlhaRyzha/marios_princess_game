@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import Callable, Optional, Protocol, TYPE_CHECKING, Union, cast
 
 import pygame

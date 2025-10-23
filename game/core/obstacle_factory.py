@@ -1,6 +1,9 @@
+from __future__ import annotations
+
 import math
 import random
 from typing import Tuple, cast
+
 import pygame
 
 from game.core.obstacle import Anchor, Obstacle
@@ -18,6 +21,7 @@ from game.utils import LEVEL_WIDTH, OBSTACLE_SCALE
 
 
 class MovingObstacle(Obstacle):
+
     def __init__(
         self,
         *args,

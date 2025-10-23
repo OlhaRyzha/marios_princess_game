@@ -1,6 +1,10 @@
+from __future__ import annotations
+
 import os
 from typing import List
+
 import pygame
+
 from game.utils import SPRITES_DIR, TARGET_H, load_image, scale_to_height
 
 

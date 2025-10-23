@@ -1,4 +1,7 @@
+from __future__ import annotations
+
 from typing import Dict, Literal
+
 from game.utils import TARGET_H, CROUCH_SCALE
 
 LocationName = Literal["sunny_meadows", "mushroom_woods", "crystal_caves"]

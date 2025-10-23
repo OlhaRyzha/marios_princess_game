@@ -1,8 +1,12 @@
+from __future__ import annotations
+
 from pathlib import Path
+
 
 WIDTH, HEIGHT = 1280, 720
 FPS = 60
 TITLE = "Mario’s Princess — demo"
+
 
 GRAVITY = 0.8
 SPEED_WALK = 3.0
@@ -10,14 +14,17 @@ SPEED_RUN = 5.0
 JUMP_V = -18.0
 JUMP_PUSH_X = 14.0
 
+
 LEVEL_WIDTH = 4000
 GROUND_STRIP_H = 90
 GROUND_Y = HEIGHT - 72
 TARGET_H = 220
 
+
 FONT_NAME = "arialunicode"
 FONT_SIZE = 22
 HELP_TEXT = "←/→ move, space — jump, ↓ — crouch, j — attack"
+
 
 BASE_DIR = Path(__file__).resolve().parents[2]
 ASSETS_DIR = str(BASE_DIR / "assets")
@@ -25,6 +32,7 @@ SPRITES_DIR = f"{ASSETS_DIR}/princess"
 BACKGROUNDS_DIR = f"{ASSETS_DIR}/backgrounds"
 AUDIO_DIR = str(Path(ASSETS_DIR) / "audio")
 MAP_DIR = str(Path(ASSETS_DIR) / "map")
+
 
 PARALLAX_PRESETS = {
     "sunny_meadows": {
@@ -44,6 +52,7 @@ PARALLAX_PRESETS = {
     },
 }
 
+
 PARALLAX_LAYOUT = {
     "sunny_meadows": {
         "far": {"target_h": 560, "above": -90, "show_top": None},
@@ -61,6 +70,7 @@ PARALLAX_LAYOUT = {
         "fore": {"target_h": 240, "above": -42, "tile": "mirror", "show_top": 210},
     },
 }
+
 
 GROUND_THEMES = {
     "sunny_meadows": {
@@ -86,7 +96,9 @@ GROUND_THEMES = {
     },
 }
 
+
 OBSTACLE_SCALE = 0.1
+
 
 MAX_HEALTH = 5
 DAMAGE_PER_HIT = 1
@@ -97,7 +109,6 @@ DIR_BUFFER_MS = 120
 AIR_ACCEL = 0.35
 AIR_MAX_SPEED = 6.5
 AIR_FRICTION = 0.015
-
 BOSS_SCALE = 0.32
 BOSS_MAX_HEALTH = 6
 BOSS_SPEED = 1.8

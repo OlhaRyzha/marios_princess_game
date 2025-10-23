@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import Callable, Optional, cast
 
 import pygame
@@ -103,6 +105,7 @@ class DemoScene:
         self._play_music(MUSIC_LEVEL, loop=True)
 
     def _load_obstacles(self, location: LocationName):
+
         old_obstacles = tuple(self.obstacles.sprites())
         if old_obstacles:
             self.all_sprites.remove(*old_obstacles)
@@ -211,7 +214,6 @@ class DemoScene:
 
         self.boss_group.empty()
         self.projectiles.empty()
-
         self._stop_music()
         self._play_music(MUSIC_VICTORY, loop=False)
         self.fx_group.add(ConfettiBurst(self.screen.get_rect()))

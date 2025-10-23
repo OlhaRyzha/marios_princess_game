@@ -84,6 +84,7 @@ class ParallaxBackground:
         self.cfg: LocationPreset = presets[location]
 
     def draw(self, surface: pygame.Surface, cam_x: float) -> None:
+
         surface.blit(pygame.transform.smoothscale(self.sky, (WIDTH, HEIGHT)), (0, 0))
 
         self._blit_tiled(

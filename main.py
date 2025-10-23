@@ -1,25 +1,23 @@
 from __future__ import annotations
 
-import sys
 import asyncio
+import sys
 from typing import Mapping, cast
 
 import pygame
 
-from game.utils import WIDTH, HEIGHT, FPS, TITLE
 from game.core import DemoScene
-from game.ui import StartMenu, WorldMapScene
 from game.data import BOSS_ROSTER
 from game.data.locations import LOCATION_ORDER, LocationName
-from game.data.objectives import OBJECTIVES, CONTROLS
+from game.data.objectives import CONTROLS, OBJECTIVES
 from game.data.start_menu import MENU_ITEMS
-
+from game.ui import StartMenu, WorldMapScene
+from game.utils import FPS, HEIGHT, TITLE, WIDTH
 
 IS_WEB = sys.platform == "emscripten"
 
 
 def _build_boss_thumbs() -> dict[str, str | None]:
-    """Беремо зображення першого боса кожної локації для іконок на мапі."""
     thumbs: dict[str, str | None] = {}
     for loc, lst in BOSS_ROSTER.items():
         thumbs[loc] = lst[0].get("img") if lst else None
@@ -27,14 +25,12 @@ def _build_boss_thumbs() -> dict[str, str | None]:
 
 
 def _run_frame_logic(
-    *,  # допоміжна функція спільна для sync/async циклів
+    *,
     screen: pygame.Surface,
     clock: pygame.time.Clock,
     dt_scale: float,
     menu: StartMenu,
     world_map: WorldMapScene,
-    CONTROLS_MAP: Mapping[str, str] | None = None,
-    initial_location: LocationName,
     state: dict,
 ) -> None:
     progress_unlocked: set[LocationName] = state["progress_unlocked"]
@@ -67,16 +63,14 @@ def _run_frame_logic(
         if e.type == pygame.QUIT:
             state["running"] = False
 
-        # WEB: ініціалізуємо звук після першої взаємодії
         if IS_WEB and (e.type in (pygame.KEYDOWN, pygame.MOUSEBUTTONDOWN)):
             if not state["audio_armed"]:
                 try:
-                    pygame.mixer.init()  # браузер дозволить після interaction
+                    pygame.mixer.init()
                 except Exception:
                     pass
                 state["audio_armed"] = True
 
-        # --- Глобальні гарячі клавіші ---
         if e.type == pygame.KEYDOWN:
             if e.key == pygame.K_m and scene is not None:
                 if mode == "game":
@@ -106,7 +100,6 @@ def _run_frame_logic(
                     state["mode"] = mode
                     continue
 
-        # --- Обробка режимів ---
         if mode == "menu":
             menu.set_items(MENU_ITEMS)
             action = menu.handle_event(e)
@@ -170,12 +163,10 @@ def _run_frame_logic(
             if scene is not None:
                 scene.handle_event(e)
 
-        # оновити локальні → глобальні
         state["scene"] = scene
         state["mode"] = mode
         state["pending_location"] = pending_location
 
-    # --- Рендер ---
     if mode == "menu":
         state["time_accumulator"] = 0.0
         menu.draw(screen)
@@ -251,7 +242,6 @@ def main() -> None:
         "time_accumulator": 0.0,
     }
 
-    # перше оновлення прогресу для мапи
     world_map.set_progress(unlocked=progress_unlocked, completed=progress_completed)
 
     while state["running"]:
@@ -261,7 +251,6 @@ def main() -> None:
             dt_scale=1000.0,
             menu=menu,
             world_map=world_map,
-            initial_location=pending_location,
             state=state,
         )
 
@@ -308,17 +297,14 @@ async def main_async() -> None:
         _run_frame_logic(
             screen=screen,
             clock=clock,
-            dt_scale=1000.0,  # такий самий FPS-таймінг
+            dt_scale=1000.0,
             menu=menu,
             world_map=world_map,
-            initial_location=pending_location,
             state=state,
         )
-        # ВАЖЛИВО для браузера: віддати керування циклу подій
         await asyncio.sleep(0)
 
     pygame.quit()
-    # у вебі не викликаємо sys.exit()
 
 
 if __name__ == "__main__":

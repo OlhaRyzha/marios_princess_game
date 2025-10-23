@@ -1,4 +1,7 @@
+from __future__ import annotations
+
 import pygame
+
 from game.systems import Animation
 from game.utils import (
     GRAVITY,
@@ -63,7 +66,6 @@ class Princess(pygame.sprite.Sprite):
         self.anims["crouch"] = self._build_crouch_from_fall()
         self.anims["crawl"] = self._build_crawl_from_fall()
 
-        # стан
         self.state = "idle"
         self.dir = 1
         self.pos = pygame.Vector2(pos)
@@ -80,7 +82,7 @@ class Princess(pygame.sprite.Sprite):
         self.health = MAX_HEALTH
         self._last_hit_ms = -10_000
 
-        self._last_dir_input = 0  # -1, 0, 1
+        self._last_dir_input = 0
         self._last_dir_time_ms = -10_000
 
     def _build_crouch_from_fall(self) -> Animation:

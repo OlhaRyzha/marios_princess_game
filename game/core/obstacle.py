@@ -1,6 +1,10 @@
+from __future__ import annotations
+
 import os
 from typing import Literal
+
 import pygame
+
 from game.utils import GROUND_Y
 
 Anchor = Literal["ground", "air"]

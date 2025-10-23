@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import pygame
 
 from game.utils import HIT_SPARK_TIME_MS, CONFETTI_TIME_MS
@@ -67,6 +69,7 @@ class ConfettiBurst(pygame.sprite.Sprite):
         if pygame.time.get_ticks() - self.start_ms >= CONFETTI_TIME_MS:
             self.kill()
             return
+
         for p in self.particles:
             p[0] += p[2] * 60 * dt
             p[1] += p[3] * 60 * dt

@@ -1,11 +1,16 @@
+from __future__ import annotations
+
 import os
 from typing import Optional, Sequence
+
 import pygame
+
 from game.utils import FONT_SIZE
 from game.utils.fonts import load_font
 
 
 class FinaleCinematic:
+
     def __init__(
         self,
         *,

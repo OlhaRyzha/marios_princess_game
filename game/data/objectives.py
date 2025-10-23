@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 OBJECTIVES = {
     "sunny_meadows": {
         "title": "Sunny Meadows",

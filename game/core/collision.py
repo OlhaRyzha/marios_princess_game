@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import pygame
 from pygame.mask import Mask
 from typing import Protocol

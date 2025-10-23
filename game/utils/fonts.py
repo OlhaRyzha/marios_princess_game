@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import os
 from functools import lru_cache
 from pathlib import Path
@@ -10,6 +12,7 @@ from game.utils import FONT_NAME, BACKGROUNDS_DIR
 @lru_cache(maxsize=1)
 def _resolve_font_path() -> str | None:
     try:
+
         if FONT_NAME and os.path.exists(FONT_NAME):
             return FONT_NAME
 

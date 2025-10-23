@@ -1,6 +1,10 @@
+from __future__ import annotations
+
 import os
 from typing import Optional, Union, List, Tuple, Sequence
+
 import pygame
+
 from game.utils import WIDTH, HEIGHT, FONT_SIZE, BACKGROUNDS_DIR
 from game.utils.fonts import load_font
 from game.data import MENU_ITEMS
