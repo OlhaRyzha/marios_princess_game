@@ -1,0 +1,92 @@
+# ------------------------------
+# OS FILES
+# ------------------------------
+.DS_Store
+Thumbs.db
+
+# ------------------------------
+# PYTHON
+# ------------------------------
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pdb
+*.so
+*.egg
+*.egg-info/
+.eggs/
+build/
+dist/
+pip-wheel-metadata/
+wheels/
+*.spec
+
+# ------------------------------
+# ENVIRONMENTS
+# ------------------------------
+.venv/
+venv/
+env/
+ENV/
+.micromamba/
+.mamba/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+.ipynb_checkpoints/
+
+# ------------------------------
+# TOOLS & EDITORS
+# ------------------------------
+.vscode/
+.idea/
+*.sublime-workspace
+*.sublime-project
+
+# ------------------------------
+# LOGS / REPORTS
+# ------------------------------
+*.log
+coverage/
+htmlcov/
+.coverage
+.tox/
+pytestdebug.log
+
+# ------------------------------
+# ASSETS / GAME FILES
+# ------------------------------
+# Large or generated assets should be ignored if not versioned
+assets/*.tmp
+assets/**/*.tmp
+assets/**/*.bak
+*.wav~
+*.mp3~
+*.png~
+*.jpg~
+*.gif~
+*.xcf
+*.psd
+
+# ------------------------------
+# BUILD ARTIFACTS
+# ------------------------------
+*.exe
+*.dll
+*.dmg
+*.pkg
+*.app
+*.zip
+*.tar
+*.tar.gz
+*.whl
+
+# ------------------------------
+# MISC
+# ------------------------------
+*.swp
+*.bak
+*.tmp
+*.old
+*~
