@@ -18,7 +18,7 @@ Follow the steps below to clone and run the game on your computer.
 
 ### 1. Clone the repository
 ```bash
-git clone https://github.com/<your-username>/marios_princess_game.git
+git clone https://github.com/OlhaRyzha/marios_princess_game.git
 cd marios_princess_game
 ```
 
