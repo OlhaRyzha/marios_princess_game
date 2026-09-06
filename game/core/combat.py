@@ -1,20 +1,17 @@
-from __future__ import annotations
-
-from typing import Callable, Optional, Protocol, TYPE_CHECKING, Union, cast
+from collections.abc import Callable
+from typing import Protocol, cast
 
 import pygame
+from pygame.mask import Mask
+from pygame.math import Vector2
 
-from game.utils import (
-    LEVEL_WIDTH,
+from game.core.effects import HitSpark
+from game.utils.constants import (
     ATTACK_DAMAGE,
     ATTACK_HIT_COOLDOWN_MS,
     DAMAGE_PER_HIT,
+    LEVEL_WIDTH,
 )
-from game.core.effects import HitSpark
-
-if TYPE_CHECKING:
-    from pygame import Mask
-    from pygame.math import Vector2
 
 
 class PlayerSprite(Protocol):
@@ -47,7 +44,7 @@ class ProjectileSprite(Protocol):
     def kill(self) -> None: ...
 
 
-SpriteLike = Union[pygame.sprite.Sprite, PlayerSprite, BossSprite, ProjectileSprite]
+SpriteLike = pygame.sprite.Sprite | PlayerSprite | BossSprite | ProjectileSprite
 
 
 class CombatSystem:
@@ -60,7 +57,7 @@ class CombatSystem:
         fx_group: pygame.sprite.Group,
         *,
         heart_cooldown_ms: int = ATTACK_HIT_COOLDOWN_MS,
-        on_boss_defeated: Optional[Callable[[], None]] = None,
+        on_boss_defeated: Callable[[], None] | None = None,
     ) -> None:
         self.player: PlayerSprite = player
         self.boss_group = boss_group
@@ -109,12 +106,12 @@ class CombatSystem:
         ma = getattr(a, "mask", None)
         mb = getattr(b, "mask", None)
         if ma is not None and mb is not None:
-            rect_a = cast(pygame.Rect, getattr(a, "rect"))
-            rect_b = cast(pygame.Rect, getattr(b, "rect"))
+            rect_a = cast(pygame.Rect, a.rect)
+            rect_b = cast(pygame.Rect, b.rect)
             offset = (rect_b.x - rect_a.x, rect_b.y - rect_a.y)
             return ma.overlap(mb, offset) is not None
-        rect_a = cast(pygame.Rect, getattr(a, "rect"))
-        rect_b = cast(pygame.Rect, getattr(b, "rect"))
+        rect_a = cast(pygame.Rect, a.rect)
+        rect_b = cast(pygame.Rect, b.rect)
         return rect_a.colliderect(rect_b)
 
     def _maybe_call_victory(self, boss: BossSprite) -> None:

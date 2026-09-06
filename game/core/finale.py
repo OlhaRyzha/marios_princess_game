@@ -1,11 +1,9 @@
-from __future__ import annotations
-
 import os
-from typing import Optional, Sequence
+from collections.abc import Sequence
 
 import pygame
 
-from game.utils import FONT_SIZE
+from game.utils.constants import FONT_SIZE
 from game.utils.fonts import load_font
 
 
@@ -19,8 +17,8 @@ class FinaleCinematic:
         hug_candidates: Sequence[str] | None = None,
     ):
         self.duration_ms = duration_ms
-        self._start_ms: Optional[int] = None
-        self._hug_img: Optional[pygame.Surface] = None
+        self._start_ms: int | None = None
+        self._hug_img: pygame.Surface | None = None
         self._hug_candidates = tuple(
             hug_candidates
             or (

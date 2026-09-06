@@ -1,39 +1,40 @@
-from __future__ import annotations
-
-from typing import Callable, Optional, cast
+from collections.abc import Callable
+from typing import cast
 
 import pygame
 from pygame.sprite import Group
 
-from game.utils import (
-    WIDTH,
-    LEVEL_WIDTH,
-    HELP_TEXT,
+from game.core.background import ParallaxBackground
+from game.core.boss_actor import BossActor
+from game.core.collectible import Collectible
+from game.core.collision import MaskedSprite, collide_mask
+from game.core.combat import CombatSystem
+from game.core.effects import ConfettiBurst, HitSpark
+from game.core.finale import FinaleCinematic
+from game.core.obstacle_factory import boss_gate_position, build_obstacles
+from game.core.player import Princess
+from game.data.bosses import BOSS_ROSTER
+from game.data.collectibles import COLLECTIBLE_SETS
+from game.data.locations import NEXT_LOCATION, LocationName
+from game.ui.boss_preview import BossPreview
+from game.ui.hud import HealthHUD
+from game.ui.ui_modal import VictoryModal
+from game.utils.constants import (
+    BOSS_DIM_COLOR,
+    DAMAGE_PER_HIT,
     FONT_SIZE,
     GROUND_Y,
-    OBSTACLE_SCALE,
-    DAMAGE_PER_HIT,
+    HELP_TEXT,
+    LEVEL_WIDTH,
     MUSIC_BOSS,
+    MUSIC_LEVEL,
     MUSIC_VICTORY,
     MUSIC_VOLUME,
-    BOSS_DIM_COLOR,
-    MUSIC_LEVEL,
+    OBSTACLE_SCALE,
+    WIDTH,
 )
 from game.utils.fonts import load_font
 from game.utils.images import scale_to_height
-from game.core.background import ParallaxBackground
-from game.core.player import Princess
-from game.ui.hud import HealthHUD
-from game.data import BOSS_ROSTER, COLLECTIBLE_SETS, LocationName, NEXT_LOCATION
-from game.ui.boss_preview import BossPreview
-from game.core.boss_actor import BossActor
-from game.core.effects import ConfettiBurst, HitSpark
-from game.ui.ui_modal import VictoryModal
-from game.core.combat import CombatSystem
-from game.core.collision import MaskedSprite, collide_mask
-from game.core.obstacle_factory import build_obstacles, boss_gate_position
-from game.core.finale import FinaleCinematic
-from game.core.collectible import Collectible
 
 
 class DemoScene:
@@ -84,10 +85,10 @@ class DemoScene:
 
         self.victory_modal: VictoryModal | None = None
         self.finale = FinaleCinematic(duration_ms=3200, font_size=FONT_SIZE)
-        self._pending_final_modal: Optional[tuple[str, list[str]]] = None
+        self._pending_final_modal: tuple[str, list[str]] | None = None
         self.collectible_goal = 0
         self.collectibles_collected = 0
-        self.collectible_icon: Optional[pygame.Surface] = None
+        self.collectible_icon: pygame.Surface | None = None
         self.collectible_label: str = ""
         self.collectible_hint_line: str = ""
         self.collectible_progress_text: str = ""
@@ -141,8 +142,8 @@ class DemoScene:
         if not setup:
             return
 
-        world_surface: Optional[pygame.Surface] = None
-        icon_surface: Optional[pygame.Surface] = None
+        world_surface: pygame.Surface | None = None
+        icon_surface: pygame.Surface | None = None
         if setup.image_path:
             try:
                 raw = pygame.image.load(setup.image_path).convert_alpha()

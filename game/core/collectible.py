@@ -1,17 +1,14 @@
-from __future__ import annotations
-
 import math
 import random
-from functools import lru_cache
-from typing import Tuple
+from functools import cache
 
 import pygame
 
 from game.utils.images import scale_to_height
 
 
-def _star_points(radius: float, spikes: int = 5) -> list[Tuple[float, float]]:
-    pts: list[Tuple[float, float]] = []
+def _star_points(radius: float, spikes: int = 5) -> list[tuple[float, float]]:
+    pts: list[tuple[float, float]] = []
     outer_r = radius
     inner_r = radius * 0.45
     angle = math.pi / spikes
@@ -72,7 +69,7 @@ def _render_shape(kind: str, size: int) -> pygame.Surface:
     return surf
 
 
-@lru_cache(maxsize=None)
+@cache
 def collectible_surface(kind: str, size: int) -> pygame.Surface:
     return _render_shape(kind, size)
 
@@ -81,7 +78,7 @@ class Collectible(pygame.sprite.Sprite):
     def __init__(
         self,
         kind: str,
-        pos: Tuple[int, int],
+        pos: tuple[int, int],
         *,
         size: int = 46,
         surface: pygame.Surface | None = None,

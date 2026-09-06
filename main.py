@@ -1,4 +1,5 @@
 import sys
+
 from game.app import run_game
 
 

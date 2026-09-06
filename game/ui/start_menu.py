@@ -1,14 +1,11 @@
-from __future__ import annotations
-
 import os
-from typing import Optional, Union, List, Tuple, Sequence
+from collections.abc import Sequence
 
 import pygame
 
-from game.utils import WIDTH, HEIGHT, FONT_SIZE, BACKGROUNDS_DIR
+from game.data.start_menu import MENU_ITEMS
+from game.utils.constants import BACKGROUNDS_DIR, FONT_SIZE, HEIGHT, WIDTH
 from game.utils.fonts import load_font
-from game.data import MENU_ITEMS
-
 
 MENU_BG_PATH = os.path.join(BACKGROUNDS_DIR, "mushroom_woods", "sky.png")
 
@@ -19,8 +16,8 @@ BTN_WIDTH_RATIO = 0.46
 BTN_GAP = 20
 TITLE_Y = int(HEIGHT * 0.15)
 
-ColorTuple = Union[Tuple[int, int, int], Tuple[int, int, int, int]]
-ColorValue = Union[pygame.Color, ColorTuple]
+ColorTuple = tuple[int, int, int] | tuple[int, int, int, int]
+ColorValue = pygame.Color | ColorTuple
 
 
 def _load_image(path: str) -> pygame.Surface:
@@ -57,23 +54,23 @@ class StartMenu:
         self.font_btn = load_font(int(FONT_SIZE * 1.4))
         self.font_hint = load_font(int(FONT_SIZE * 1.1))
 
-        self.items: List[str] = []
+        self.items: list[str] = []
         self.selected: int = 0
 
         self.btn_w: int = int(WIDTH * BTN_WIDTH_RATIO)
         self.btn_h: int = BTN_HEIGHT
         self.btn_gap: int = BTN_GAP
-        self.btn_rects: List[pygame.Rect] = []
+        self.btn_rects: list[pygame.Rect] = []
         self.set_items(MENU_ITEMS)
 
         self.controls_open: bool = False
-        self.controls_lines: List[str] = ["—"]
+        self.controls_lines: list[str] = ["—"]
 
     def set_items(self, items: Sequence[str]) -> None:
         self.items = [str(it) for it in items]
         self.btn_rects = self._build_button_rects()
 
-    def set_controls(self, text: Union[str, List[str]]) -> None:
+    def set_controls(self, text: str | list[str]) -> None:
         if isinstance(text, str):
             self.controls_lines = text.splitlines()
         elif isinstance(text, list):
@@ -84,11 +81,11 @@ class StartMenu:
     def open_controls(self) -> None:
         self.controls_open = True
 
-    def _build_button_rects(self) -> List[pygame.Rect]:
+    def _build_button_rects(self) -> list[pygame.Rect]:
         cx = WIDTH // 2
         total_h = len(self.items) * self.btn_h + (len(self.items) - 1) * self.btn_gap
         top = HEIGHT // 2 - total_h // 2 + 20
-        rects: List[pygame.Rect] = []
+        rects: list[pygame.Rect] = []
         y = top
         for _ in self.items:
             r = pygame.Rect(0, 0, self.btn_w, self.btn_h)
@@ -177,7 +174,7 @@ class StartMenu:
             ),
         )
 
-    def handle_event(self, e: pygame.event.Event) -> Optional[str]:
+    def handle_event(self, e: pygame.event.Event) -> str | None:
         if self.controls_open:
             if e.type == pygame.KEYDOWN and e.key in (pygame.K_RETURN, pygame.K_ESCAPE):
                 self.controls_open = False
@@ -228,7 +225,7 @@ class StartMenu:
 
         self._draw_title(surface)
 
-        for i, (label, rect) in enumerate(zip(self.items, self.btn_rects)):
+        for i, (label, rect) in enumerate(zip(self.items, self.btn_rects, strict=True)):
             self._draw_button(surface, rect, label, selected=(i == self.selected))
 
         self._draw_hints(surface)

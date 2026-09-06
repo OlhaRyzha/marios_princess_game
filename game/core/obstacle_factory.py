@@ -1,23 +1,23 @@
-from __future__ import annotations
-
 import math
 import random
-from typing import Tuple, cast
+from typing import cast
 
 import pygame
 
 from game.core.obstacle import Anchor, Obstacle
-from game.data import (
+from game.data.blocks import (
     CAVES_BLOCKS,
-    CAVES_PATTERN,
-    LocationName,
     MEADOWS_BLOCKS,
-    MEADOWS_PATTERN,
     WOODS_BLOCKS,
+)
+from game.data.locations import (
+    CAVES_PATTERN,
+    MEADOWS_PATTERN,
     WOODS_PATTERN,
+    LocationName,
     crawl_gap,
 )
-from game.utils import LEVEL_WIDTH, OBSTACLE_SCALE
+from game.utils.constants import LEVEL_WIDTH, OBSTACLE_SCALE
 
 
 class MovingObstacle(Obstacle):
@@ -133,7 +133,7 @@ def build_obstacles(
     safe_gap: int = 520,
     step_x: int = 320,
     scale: float = OBSTACLE_SCALE,
-) -> Tuple[list[Obstacle], int]:
+) -> tuple[list[Obstacle], int]:
 
     obstacles: list[Obstacle] = []
     blocks, pattern = _blocks_for_location(location)

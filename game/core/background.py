@@ -1,21 +1,19 @@
-from __future__ import annotations
-
 import os
-from typing import Literal, Optional, TypedDict, cast
+from typing import Literal, TypedDict, cast
 
 import pygame
 
-from game.utils import (
-    WIDTH,
-    HEIGHT,
+from game.utils.constants import (
     BACKGROUNDS_DIR,
-    PARALLAX_PRESETS,
-    PARALLAX_LAYOUT,
-    GROUND_Y,
     GROUND_STRIP_H,
     GROUND_THEMES,
-    load_image,
+    GROUND_Y,
+    HEIGHT,
+    PARALLAX_LAYOUT,
+    PARALLAX_PRESETS,
+    WIDTH,
 )
+from game.utils.images import load_image
 
 
 class LayerPreset(TypedDict):
@@ -73,9 +71,9 @@ class ParallaxBackground:
         self.l_mid: LayerLayout = layout["mid"]
         self.l_fore: LayerLayout = layout["fore"]
 
-        far_target = cast(Optional[int], self.l_far.get("target_h"))
-        mid_target = cast(Optional[int], self.l_mid.get("target_h"))
-        fore_target = cast(Optional[int], self.l_fore.get("target_h"))
+        far_target = cast(int | None, self.l_far.get("target_h"))
+        mid_target = cast(int | None, self.l_mid.get("target_h"))
+        fore_target = cast(int | None, self.l_fore.get("target_h"))
 
         self.far = _scale_to_height(far_raw, far_target)
         self.mid = _scale_to_height(mid_raw, mid_target)

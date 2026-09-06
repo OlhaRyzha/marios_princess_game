@@ -1,8 +1,7 @@
-from __future__ import annotations
+from typing import Protocol
 
 import pygame
 from pygame.mask import Mask
-from typing import Protocol
 
 
 class MaskedSprite(Protocol):

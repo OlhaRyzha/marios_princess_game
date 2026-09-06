@@ -1,27 +1,25 @@
-from __future__ import annotations
-
 import pygame
 
-from game.systems import Animation
-from game.utils import (
+from game.systems.animation import Animation
+from game.utils.assets import load_sequence
+from game.utils.constants import (
+    AIR_ACCEL,
+    AIR_FRICTION,
+    AIR_MAX_SPEED,
+    CRAWL_SPEED,
+    CROUCH_SCALE,
+    DAMAGE_COOLDOWN_MS,
+    DIR_BUFFER_MS,
     GRAVITY,
-    SPEED_WALK,
-    SPEED_RUN,
-    JUMP_V,
     GROUND_Y,
-    TARGET_H,
-    WIDTH,
+    JUMP_V,
     LEVEL_WIDTH,
     MAX_HEALTH,
-    DAMAGE_COOLDOWN_MS,
-    CROUCH_SCALE,
-    CRAWL_SPEED,
-    DIR_BUFFER_MS,
-    AIR_ACCEL,
-    AIR_MAX_SPEED,
-    AIR_FRICTION,
+    SPEED_RUN,
+    SPEED_WALK,
+    TARGET_H,
+    WIDTH,
 )
-from game.utils.assets import load_sequence
 
 
 class Princess(pygame.sprite.Sprite):

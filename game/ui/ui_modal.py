@@ -1,8 +1,6 @@
-from __future__ import annotations
-
 import pygame
 
-from game.utils import WIDTH, HEIGHT, VICTORY_DIM_COLOR, FONT_SIZE
+from game.utils.constants import FONT_SIZE, HEIGHT, VICTORY_DIM_COLOR, WIDTH
 from game.utils.fonts import load_font
 from game.utils.images import load_image, scale_to_height
 

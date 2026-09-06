@@ -1,38 +1,36 @@
-from __future__ import annotations
-
 import math
 import os
 import random
+from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
-from typing import Dict, Iterable, List, Mapping, Optional, Set, Tuple, cast
+from typing import cast
 
 import pygame
 
-from game.data.locations import LocationName, LOCATION_ORDER
-from game.utils import (
+from game.data.locations import LOCATION_ORDER, LocationName
+from game.utils.constants import (
     ASSETS_DIR,
     BACKGROUNDS_DIR,
     FONT_SIZE,
     HEIGHT,
     MAP_DIR,
     WIDTH,
-    load_image,
-    scale_to_height,
 )
 from game.utils.fonts import load_font
+from game.utils.images import load_image, scale_to_height
 
-MapEvent = Optional[Tuple[str, Optional[LocationName]]]
+MapEvent = tuple[str, LocationName | None] | None
 
 
-LocationTitlePair = Tuple[LocationName, str]
+LocationTitlePair = tuple[LocationName, str]
 
-LOCATIONS: List[LocationTitlePair] = [
+LOCATIONS: list[LocationTitlePair] = [
     ("sunny_meadows", "Sunny Meadows"),
     ("mushroom_woods", "Mushroom Woods"),
     ("crystal_caves", "Crystal Caves"),
 ]
 
-LOC_POS: Dict[LocationName, Tuple[int, int]] = {
+LOC_POS: dict[LocationName, tuple[int, int]] = {
     "sunny_meadows": (int(WIDTH * 0.25), int(HEIGHT * 0.55)),
     "mushroom_woods": (int(WIDTH * 0.50), int(HEIGHT * 0.40)),
     "crystal_caves": (int(WIDTH * 0.78), int(HEIGHT * 0.58)),
@@ -45,14 +43,14 @@ BOSS_THUMB_RADIUS = 38
 FOG_PARTICLE_COUNT = 14
 FOG_RADIUS_MARGIN = 6
 
-BUBBLE_PALETTES: Dict[str, Tuple[Tuple[int, int, int], Tuple[int, int, int]]] = {
+BUBBLE_PALETTES: dict[str, tuple[tuple[int, int, int], tuple[int, int, int]]] = {
     "idle": ((188, 205, 245), (235, 244, 255)),
     "selected": ((205, 215, 255), (248, 252, 255)),
     "completed": ((210, 198, 170), (255, 240, 210)),
     "locked": ((140, 150, 170), (188, 198, 215)),
 }
 
-FOG_INTENSITY: Dict[str, float] = {
+FOG_INTENSITY: dict[str, float] = {
     "selected": 1.15,
     "completed": 0.95,
     "idle": 0.78,
@@ -90,8 +88,8 @@ def _lerp(a: float, b: float, t: float) -> float:
 
 
 def _mix_color(
-    c0: Tuple[int, int, int], c1: Tuple[int, int, int], t: float
-) -> Tuple[int, int, int]:
+    c0: tuple[int, int, int], c1: tuple[int, int, int], t: float
+) -> tuple[int, int, int]:
     return (
         int(_lerp(c0[0], c1[0], t)),
         int(_lerp(c0[1], c1[1], t)),
@@ -99,7 +97,7 @@ def _mix_color(
     )
 
 
-def _scale_color(color: Tuple[int, int, int], factor: float) -> Tuple[int, int, int]:
+def _scale_color(color: tuple[int, int, int], factor: float) -> tuple[int, int, int]:
     r = max(0, min(255, int(color[0] * factor)))
     g = max(0, min(255, int(color[1] * factor)))
     b = max(0, min(255, int(color[2] * factor)))
@@ -108,7 +106,7 @@ def _scale_color(color: Tuple[int, int, int], factor: float) -> Tuple[int, int, 
 
 def _make_bubble_surface(
     radius: int,
-    palette: Tuple[Tuple[int, int, int], Tuple[int, int, int]],
+    palette: tuple[tuple[int, int, int], tuple[int, int, int]],
     *,
     brightness: float = 1.0,
 ) -> pygame.Surface:
@@ -186,7 +184,7 @@ def _load_bg() -> pygame.Surface:
     return surf
 
 
-def _load_image(path: Optional[str]) -> Optional[pygame.Surface]:
+def _load_image(path: str | None) -> pygame.Surface | None:
     if not path:
         return None
     try:
@@ -244,7 +242,7 @@ class WorldMapScene:
         self,
         *,
         objectives: Mapping[LocationName, object] | None = None,
-        boss_thumbs: Mapping[str, Optional[str]] | None = None,
+        boss_thumbs: Mapping[str, str | None] | None = None,
         unlocked: Iterable[LocationName] | None = None,
         completed: Iterable[LocationName] | None = None,
     ) -> None:
@@ -257,44 +255,44 @@ class WorldMapScene:
 
         self.mario_frames: list[pygame.Surface] = _load_mario_frames()
         self._mario_frame_ms: int = MARIO_FRAME_MS
-        self._mario_shadow: Optional[pygame.Surface] = self._make_mario_shadow()
-        self._mario_location: Optional[LocationName] = None
+        self._mario_shadow: pygame.Surface | None = self._make_mario_shadow()
+        self._mario_location: LocationName | None = None
 
-        self.objectives: Dict[LocationName, object] = (
+        self.objectives: dict[LocationName, object] = (
             dict(objectives) if objectives else {}
         )
 
-        self.boss_thumbs_paths: Dict[str, Optional[str]] = (
+        self.boss_thumbs_paths: dict[str, str | None] = (
             dict(boss_thumbs) if boss_thumbs else {}
         )
 
-        self.boss_thumbs_img: Dict[str, Optional[pygame.Surface]] = {
+        self.boss_thumbs_img: dict[str, pygame.Surface | None] = {
             loc: _load_image(self.boss_thumbs_paths.get(loc)) for loc, _ in LOCATIONS
         }
 
         self.locations: list[LocationName] = [loc for loc, _ in LOCATIONS]
-        self.loc_titles: Dict[LocationName, str] = {
+        self.loc_titles: dict[LocationName, str] = {
             loc: title for loc, title in LOCATIONS
         }
         self.selected_idx = 0
 
-        self.completed: Set[LocationName] = set(completed) if completed else set()
-        self.unlocked: Set[LocationName] = set(unlocked) if unlocked else set()
+        self.completed: set[LocationName] = set(completed) if completed else set()
+        self.unlocked: set[LocationName] = set(unlocked) if unlocked else set()
         if not self.unlocked and self.locations:
             self.unlocked.add(self.locations[0])
 
-        self.node_rects: Dict[LocationName, pygame.Rect] = {}
+        self.node_rects: dict[LocationName, pygame.Rect] = {}
         self._rebuild_node_rects()
 
-        self._bubble_surfaces: Dict[str, pygame.Surface] = self._build_bubble_surfaces()
-        self._fog_particles: Dict[LocationName, list[FogParticle]] = (
+        self._bubble_surfaces: dict[str, pygame.Surface] = self._build_bubble_surfaces()
+        self._fog_particles: dict[LocationName, list[FogParticle]] = (
             self._build_fog_particles()
         )
 
         self._ensure_selection_focus()
         self._update_mario_location()
 
-    def _build_bubble_surfaces(self) -> Dict[str, pygame.Surface]:
+    def _build_bubble_surfaces(self) -> dict[str, pygame.Surface]:
         return {
             "idle": _make_bubble_surface(
                 NODE_RADIUS, BUBBLE_PALETTES["idle"], brightness=1.0
@@ -310,9 +308,9 @@ class WorldMapScene:
             ),
         }
 
-    def _build_fog_particles(self) -> Dict[LocationName, list[FogParticle]]:
+    def _build_fog_particles(self) -> dict[LocationName, list[FogParticle]]:
         rng = random.Random(0x5EA1)
-        particles: Dict[LocationName, list[FogParticle]] = {}
+        particles: dict[LocationName, list[FogParticle]] = {}
         for loc in self.locations:
             nodes = [
                 FogParticle(
@@ -336,7 +334,7 @@ class WorldMapScene:
             r.center = (x, y)
             self.node_rects[loc] = r
 
-    def _make_mario_shadow(self) -> Optional[pygame.Surface]:
+    def _make_mario_shadow(self) -> pygame.Surface | None:
         if not self.mario_frames:
             return None
         width = max(frame.get_width() for frame in self.mario_frames)
@@ -348,7 +346,7 @@ class WorldMapScene:
         )
         return surf
 
-    def _current_mario_pos(self) -> Optional[Tuple[int, int]]:
+    def _current_mario_pos(self) -> tuple[int, int] | None:
         if self._mario_location is None:
             return None
         anchor = LOC_POS.get(self._mario_location)
@@ -376,7 +374,7 @@ class WorldMapScene:
                 return
         self._mario_location = ordered[0]
 
-    def _loc_under_mouse(self, pos: Tuple[int, int]) -> Optional["LocationName"]:
+    def _loc_under_mouse(self, pos: tuple[int, int]) -> LocationName | None:
         for loc, rect in self.node_rects.items():
             if rect.collidepoint(pos):
                 cx, cy = rect.center
@@ -447,7 +445,7 @@ class WorldMapScene:
         self,
         surface: pygame.Surface,
         loc: LocationName,
-        center: Tuple[int, int],
+        center: tuple[int, int],
         intensity: float,
     ) -> None:
         particles = self._fog_particles.get(loc)
@@ -522,7 +520,7 @@ class WorldMapScene:
             return
 
         centers = [pygame.math.Vector2(LOC_POS[loc]) for loc in self.locations]
-        for start, end in zip(centers, centers[1:]):
+        for start, end in zip(centers, centers[1:], strict=False):
             delta = end - start
             length = delta.length()
             if length <= NODE_RADIUS * 2:

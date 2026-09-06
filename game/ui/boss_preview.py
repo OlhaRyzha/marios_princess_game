@@ -1,11 +1,10 @@
-from __future__ import annotations
-
-from typing import Dict, Callable, Optional, List
+from collections.abc import Callable
 
 import pygame
 
-from game.utils import WIDTH, HEIGHT, FONT_SIZE, load_image
+from game.utils.constants import FONT_SIZE, HEIGHT, WIDTH
 from game.utils.fonts import load_font
+from game.utils.images import load_image
 
 PADDING = 24
 CARD_W = int(WIDTH * 0.78)
@@ -15,18 +14,18 @@ CARD_H = int(HEIGHT * 0.64)
 class BossPreview:
 
     def __init__(
-        self, font: pygame.font.Font, on_select: Optional[Callable[[Dict], None]] = None
+        self, font: pygame.font.Font, on_select: Callable[[dict], None] | None = None
     ):
         self.font = font
         self.active = False
-        self._items: List[Dict] = []
+        self._items: list[dict] = []
         self._idx = 0
         self._img_cache: dict[str, pygame.Surface] = {}
         self.title_font = load_font(int(FONT_SIZE * 1.4))
         self.small = load_font(int(FONT_SIZE * 0.9))
         self.on_select = on_select
 
-    def open(self, bosses: List[Dict]):
+    def open(self, bosses: list[dict]):
         self._items = bosses[:]
         self._idx = 0
         self.active = bool(self._items)

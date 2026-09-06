@@ -1,8 +1,6 @@
-from __future__ import annotations
-
 import pygame
 
-from game.utils import HIT_SPARK_TIME_MS, CONFETTI_TIME_MS
+from game.utils.constants import CONFETTI_TIME_MS, HIT_SPARK_TIME_MS
 
 
 class HitSpark(pygame.sprite.Sprite):

@@ -1,17 +1,15 @@
-from __future__ import annotations
-
 import pygame
 
-from game.utils import (
-    GROUND_Y,
+from game.utils.constants import (
+    BOSS_HIT_COOLDOWN_MS,
+    BOSS_JUMP_V,
     BOSS_MAX_HEALTH,
     BOSS_SCALE,
     BOSS_SPEED,
-    BOSS_JUMP_V,
-    BOSS_HIT_COOLDOWN_MS,
     GRAVITY,
-    load_image,
+    GROUND_Y,
 )
+from game.utils.images import load_image
 
 
 class BossActor(pygame.sprite.Sprite):

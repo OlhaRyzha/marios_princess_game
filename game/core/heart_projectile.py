@@ -1,6 +1,6 @@
 import pygame
 
-from game.utils import load_image
+from game.utils.images import load_image
 
 
 class HeartProjectile(pygame.sprite.Sprite):

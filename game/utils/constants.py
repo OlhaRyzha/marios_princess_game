@@ -1,7 +1,4 @@
-from __future__ import annotations
-
 from pathlib import Path
-
 
 WIDTH, HEIGHT = 1280, 720
 FPS = 60

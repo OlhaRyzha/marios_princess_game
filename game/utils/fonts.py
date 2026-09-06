@@ -1,12 +1,10 @@
-from __future__ import annotations
-
 import os
 from functools import lru_cache
 from pathlib import Path
 
 import pygame
 
-from game.utils import FONT_NAME, BACKGROUNDS_DIR
+from game.utils.constants import BACKGROUNDS_DIR, FONT_NAME
 
 
 @lru_cache(maxsize=1)

@@ -1,16 +1,13 @@
-from __future__ import annotations
-
 from dataclasses import dataclass
-from typing import Dict, List, Tuple
 
 from game.data.locations import LocationName
-from game.utils import GROUND_Y
+from game.utils.constants import GROUND_Y
 
 
 @dataclass(frozen=True)
 class CollectibleSet:
     kind: str
-    positions: List[Tuple[int, int]]
+    positions: list[tuple[int, int]]
     label: str
     hint: str
     image_path: str | None = None
@@ -18,7 +15,7 @@ class CollectibleSet:
     icon_height: int = 30
 
 
-COLLECTIBLE_SETS: Dict[LocationName, CollectibleSet] = {
+COLLECTIBLE_SETS: dict[LocationName, CollectibleSet] = {
     "sunny_meadows": CollectibleSet(
         kind="royal_badge",
         positions=[

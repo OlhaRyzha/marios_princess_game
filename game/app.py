@@ -1,15 +1,18 @@
-from __future__ import annotations
 import asyncio
 import sys
-from typing import Mapping, TypedDict, cast
+from collections.abc import Mapping
+from typing import TypedDict, cast
+
 import pygame
-from game.core import DemoScene
-from game.data import BOSS_ROSTER
+
+from game.core.demo_scene import DemoScene
+from game.data.bosses import BOSS_ROSTER
 from game.data.locations import LOCATION_ORDER, LocationName
 from game.data.objectives import CONTROLS, OBJECTIVES
 from game.data.start_menu import MENU_ITEMS
-from game.ui import StartMenu, WorldMapScene
-from game.utils import FPS, HEIGHT, TITLE, WIDTH
+from game.ui.start_menu import StartMenu
+from game.ui.world_map import WorldMapScene
+from game.utils.constants import FPS, HEIGHT, TITLE, WIDTH
 
 
 class GameState(TypedDict):

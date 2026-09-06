@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 BOSS_ROSTER = {
     "sunny_meadows": [
         {

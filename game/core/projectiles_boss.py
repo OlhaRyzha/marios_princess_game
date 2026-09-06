@@ -1,7 +1,8 @@
-from __future__ import annotations
 import math
+
 import pygame
-from game.utils import LEVEL_WIDTH, GROUND_Y
+
+from game.utils.constants import GROUND_Y, LEVEL_WIDTH
 
 
 class GroundWave(pygame.sprite.Sprite):
