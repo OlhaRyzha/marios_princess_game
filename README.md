@@ -1,128 +1,109 @@
-# 🎮 Mario’s Princess Game
+# Mario's Princess Game
 
-A classic 2D **platformer** built with **Python and Pygame**.
-Help the princess through colorful worlds, defeat bosses, and save Mario!
+A 2D platform game built with Python and Pygame. Guide the princess through
+three worlds, collect items, defeat each boss, and rescue Mario.
 
----
+**[Play in your browser](https://olharyzha.itch.io/marios-princess)**
 
-## 🌐 Play Online
+## Requirements
 
-You can play the game directly in your browser here:
-👉 **[https://olharyzha.itch.io/marios-princess](https://olharyzha.itch.io/marios-princess)**
+- Python 3.13
+- [uv](https://docs.astral.sh/uv/getting-started/installation/)
+- Make
 
----
+The project does not use a `.env` file. Python is selected through
+`.python-version`, and exact dependency versions are stored in `uv.lock`.
 
-## 💻 Run locally
+## Quick start
 
-Follow the steps below to clone and run the game on your computer.
-
-### 1. Clone the repository
 ```bash
 git clone https://github.com/OlhaRyzha/marios_princess_game.git
 cd marios_princess_game
-```
-
-### 2. Install uv
-
-Install [uv](https://docs.astral.sh/uv/getting-started/installation/) once on your computer.
-
-### 3. Create the environment and install dependencies
-
-```bash
-uv sync
-```
-
-### 4. Run the game
-
-```bash
+uv sync --locked
 make run
 ```
 
-`uv sync` creates `.venv`, selects the Python version from `.python-version`, and installs the exact dependency versions from `uv.lock`. You do not need to activate the environment manually.
+`uv sync` creates and manages `.venv`, so manual environment activation is not
+required.
 
-The game does not require a `.env` file. Headless SDL variables are set only by `make test`; machine-specific settings stay outside the source code.
+## Controls
 
-## 🧰 Development
+| Action | Key |
+| --- | --- |
+| Move | Left / Right arrows |
+| Jump | Space |
+| Attack | J |
+| Crouch | Down arrow |
+| Confirm | Enter |
+| Pause / Back | Esc |
+
+## Development
+
+| Command | Purpose |
+| --- | --- |
+| `make run` | Start the desktop game |
+| `make format` | Apply Ruff fixes and Black formatting |
+| `make lint` | Run Ruff checks |
+| `make test` | Run the test suite with headless SDL |
+| `make coverage` | Run tests with the 60% branch coverage threshold |
+| `make check` | Check formatting, lint, and tests |
+| `make pre-commit-install` | Install commit and push hooks |
+| `make pre-commit` | Run every pre-commit hook |
+
+Install the Git hooks once after cloning:
 
 ```bash
-make format              # Fix Ruff issues and format with Black
-make lint                # Check the code with Ruff
-make test                # Run tests without opening a game window
-make coverage            # Run tests and enforce the 60% branch coverage baseline
-make check               # Run formatting, lint, and tests
-make pre-commit-install  # Install Git hooks once
-make pre-commit          # Check all tracked files manually
+make pre-commit-install
 ```
 
-Runtime dependencies and development tools are declared separately in `pyproject.toml`. Do not edit `.venv` or `uv.lock` manually. Use `uv add <package>` for a game dependency and `uv add --dev <package>` for a development tool.
-
-Tests are documented in [`tests/README.md`](tests/README.md). Shared resource lifecycle belongs in fixtures; reusable object construction belongs in factories.
+Add runtime packages with `uv add <package>` and development tools with
+`uv add --dev <package>`. Do not edit `.venv` or `uv.lock` manually.
 
 ## Project structure
 
 ```text
-game/app.py              desktop/web runtime and frame sequence
-game/controller.py       state transitions and progress commands
-game/input_adapter.py    Pygame events routed to the active mode
-game/frame_renderer.py   menu, map, game, and pause rendering
-game/scene_factory.py    scene construction and dependency wiring
-game/core/               gameplay actors and systems
-game/data/               immutable game configuration
-game/services/           adapters for external services such as audio
-game/systems/            time, held input, and animation abstractions
-game/utils/              paths, images, fonts, and constants
-tests/unit/              focused behavior tests
-tests/integration/       runtime flows across several components
-tests/factories/         reusable deterministic test objects
+game/
+├── app.py             # runtime and frame loop
+├── controller.py      # state transitions and commands
+├── input_adapter.py   # keyboard and window events
+├── frame_renderer.py  # scene rendering
+├── scene_factory.py   # scene construction
+├── core/              # gameplay objects and combat
+├── data/              # immutable game configuration
+├── services/          # audio and external adapters
+├── systems/           # time, input, and animation abstractions
+├── ui/                # menus, map, HUD, and dialogs
+└── utils/             # assets, paths, fonts, and constants
+tests/
+├── unit/              # isolated behavior tests
+├── integration/       # multi-component runtime flows
+└── factories/         # reusable deterministic test objects
 ```
 
-The runtime explicitly passes time, held input, random generation, and audio to
-the components that use them. Tests replace these dependencies with small fake
-objects instead of patching Pygame globals.
+Runtime dependencies such as time, held input, randomness, and audio are passed
+explicitly to gameplay components. Tests use fixtures for shared lifecycle and
+factories for reusable object construction. See [tests/README.md](tests/README.md)
+for the testing conventions.
 
-## Configuration and assets
+## Browser build and release
 
-The game currently needs no `.env` file. Python and package versions are fixed
-by `.python-version` and `uv.lock`. Asset paths are resolved from the repository
-root, so `main.py` can be launched from another working directory. Optional
-images render a visible fallback and log the full missing path; required
-gameplay assets raise a precise `FileNotFoundError`.
-
-## Adding a test
-
-Choose `tests/unit/` for one component and `tests/integration/` for a complete
-runtime transition. Use the headless `pygame_runtime` fixture when the test
-creates surfaces. Add a factory only when multiple tests need configurable
-instances. Run `make test` while working and `make coverage` before review.
-
-## Web runtime
-
-`game.app.run_game()` detects the Emscripten platform and uses an async frame
-loop. Browser audio is armed after the first keyboard or mouse action. The
-published browser version is linked above. Build the upload archive with:
+Build or run the Pygbag version locally:
 
 ```bash
-make web-build
+make web-build  # creates build/web.zip
+make web-serve  # serves the game locally
 ```
 
-The archive is written to `build/web.zip`. The complete release and Butler
-instructions are in
-[`docs/itch-io-release.md`](docs/itch-io-release.md).
+After the one-time `butler login`, publish a new itch.io version with:
 
-After the one-time `butler login`, build and publish a new version with
-`make web-publish`.
+```bash
+make web-publish
+```
 
-Development rules and the review workflow are in
-[`CONTRIBUTING.md`](CONTRIBUTING.md).
+See [docs/itch-io-release.md](docs/itch-io-release.md) for the complete release
+checklist and troubleshooting steps.
 
----
+## Contributing
 
-## 🕹️ Controls
-
-| Action | Key |
-|--------|-----|
-| Move left / right | ← / → |
-| Jump | Space |
-| Attack | J |
-| Crouch | ↓ |
-| Start / Back | Enter / Esc |
+Read [CONTRIBUTING.md](CONTRIBUTING.md) before making changes. It describes the
+branch workflow, code quality rules, test layout, and review checklist.

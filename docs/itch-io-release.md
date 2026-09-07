@@ -1,12 +1,11 @@
-# Як оновити гру на itch.io
+# Releasing the game on itch.io
 
-Ця інструкція оновлює браузерну версію на
+This guide updates the browser version at
 [olharyzha.itch.io/marios-princess](https://olharyzha.itch.io/marios-princess).
-Web-збірку створює Pygbag, зафіксований у `uv.lock`.
 
-## 1. Перевірити версію перед релізом
+## Before publishing
 
-З кореня репозиторію виконайте:
+From the project root, install the locked dependencies and run all checks:
 
 ```bash
 uv sync --locked
@@ -14,94 +13,55 @@ make check
 make coverage
 ```
 
-Запустіть desktop-версію через `make run` і вручну перевірте:
+Run `make run` and verify the menu, movement, jumping, pause, boss selection,
+shooting with `J`, victory, and level unlocking.
 
-1. головне меню та екран керування;
-2. карту й запуск кожної відкритої локації;
-3. рух, стрибок, паузу та повернення до гри;
-4. вибір боса, постріл клавішею `J` і зменшення його здоров’я;
-5. перемогу, відкриття наступної локації та фінальний екран.
-
-## 2. Створити браузерну збірку
+## Build and test the web version
 
 ```bash
 make web-build
 ```
 
-Команда використовує CPython 3.13, тому web runtime відповідає версії Python
-проєкту. Готовий архів для itch.io з’явиться тут:
-
-```text
-build/web.zip
-```
-
-Усередині ZIP файл `index.html` повинен лежати в корені архіву. itch.io вимагає
-саме ZIP із кореневим `index.html`; назви файлів на сервері чутливі до регістру.
-
-## 3. Перевірити збірку локально
+The itch.io archive is created at `build/web.zip`. To test it locally, run:
 
 ```bash
 make web-serve
 ```
 
-Відкрийте адресу, яку покаже Pygbag, зазвичай `http://localhost:8000`.
-Перевірте гру в браузері тим самим коротким сценарієм. Перший запуск може
-завантажувати Python/WASM runtime довше за наступні.
+Open the URL printed by Pygbag, usually `http://localhost:8000`.
 
-## 4. Завантажити через сайт itch.io
+## Publish
 
-1. Увійдіть у профіль `olharyzha`.
-2. Відкрийте сторінку гри й натисніть **Edit game**.
-3. Переконайтеся, що **Kind of project** має значення **HTML**.
-4. У секції **Uploads** завантажте `build/web.zip`.
-5. Позначте новий файл як браузерну збірку, якщо itch.io не визначив це
-   автоматично.
-6. Встановіть viewport `1280 × 720` і залиште доступною fullscreen-кнопку.
-7. Збережіть сторінку та відкрийте preview.
-8. Перевірте assets, звук після першого кліку, керування й бій із босом.
-9. Видаліть старий ZIP лише після успішної перевірки нової версії.
-
-## 5. Оновлювати через Butler
-
-Butler зручний для повторних релізів: він завантажує лише різницю між збірками.
-Після [встановлення Butler](https://itch.io/docs/butler/installing.html) один раз
-авторизуйте комп’ютер:
+Butler is already installed on this Mac. Authenticate once:
 
 ```bash
 butler login
 ```
 
-Потім кожне оновлення можна опублікувати командою:
+For every release after that, build and upload the game with one command:
 
 ```bash
 make web-publish
 ```
 
-`make web-publish` спочатку виконує `make web-build`, а після успішної збірки
-запускає:
+This publishes `build/web.zip` to the `html5` channel of
+`olharyzha/marios-princess`. Check the uploaded build with:
 
 ```bash
-butler push build/web.zip olharyzha/marios-princess:html5
+butler status olharyzha/marios-princess:html5
 ```
 
-Після першого push відкрийте **Edit game → Uploads** і переконайтеся, що канал
-`html5` позначений як playable in browser. Наступний push у той самий канал
-оновлюватиме наявну браузерну збірку.
+## Troubleshooting
 
-## Типові проблеми
+- **Old version is displayed:** wait for itch.io to process the build, then use
+  `Cmd + Shift + R`.
+- **Blank screen or missing asset:** check filename capitalization and relative
+  paths.
+- **No sound:** click inside the game first so the browser can enable audio.
+- **Butler authentication fails:** run `butler login` again.
 
-- **На сторінці порожній екран:** перевірте, що `index.html` лежить у корені ZIP.
-- **403 для ресурсу:** перевірте регістр назви файла та шлях; itch.io розрізняє
-  великі й малі літери.
-- **Немає звуку:** спочатку клікніть усередині гри — браузер дозволяє аудіо лише
-  після дії користувача. Якщо окремий браузер не відтворює MP3, конвертуйте
-  аудіофайли в OGG і оновіть шляхи до них у коді перед наступною збіркою.
-- **Показується стара версія:** дочекайтеся обробки архіву та зробіть hard refresh.
-- **Butler відхиляє target:** target має точно відповідати
-  `olharyzha/marios-princess`.
+Official documentation:
 
-Офіційні довідки:
-
-- [Uploading HTML5 games](https://itch.io/docs/creators/html5)
-- [Pushing builds with Butler](https://itch.io/docs/butler/pushing.html)
+- [itch.io HTML5 uploads](https://itch.io/docs/creators/html5)
+- [Butler uploads](https://itch.io/docs/butler/pushing.html)
 - [Pygbag](https://github.com/pygame-web/pygbag)
