@@ -10,7 +10,9 @@ import pygame
 
 from game.actions import MapAction, MapEvent
 from game.data.locations import LOCATION_ORDER, LocationName
+from game.data.objectives import ObjectiveConfig
 from game.systems.time_source import TimeSource
+from game.ui.objective_card import ObjectiveCard
 from game.utils.constants import (
     ASSETS_DIR,
     BACKGROUNDS_DIR,
@@ -225,19 +227,12 @@ def _load_mario_frames(
     return frames
 
 
-def _clean_objective_line(text: str) -> str:
-    stripped = text.strip()
-    while stripped and stripped[0] in {"•", "-", "–"}:
-        stripped = stripped[1:].strip()
-    return stripped
-
-
 class WorldMapScene:
 
     def __init__(
         self,
         *,
-        objectives: Mapping[LocationName, object] | None = None,
+        objectives: Mapping[LocationName, ObjectiveConfig] | None = None,
         boss_thumbs: Mapping[str, str | Path | None] | None = None,
         unlocked: Iterable[LocationName] | None = None,
         completed: Iterable[LocationName] | None = None,
@@ -258,8 +253,12 @@ class WorldMapScene:
         self._mario_shadow: pygame.Surface | None = self._make_mario_shadow()
         self._mario_location: LocationName | None = None
 
-        self.objectives: dict[LocationName, object] = (
+        self.objectives: dict[LocationName, ObjectiveConfig] = (
             dict(objectives) if objectives else {}
+        )
+        self.objective_card = ObjectiveCard(
+            font=self.font_card,
+            objectives=self.objectives,
         )
 
         self.boss_thumbs_paths: dict[str, str | Path | None] = (
@@ -381,55 +380,6 @@ class WorldMapScene:
                 if (dx * dx + dy * dy) <= (NODE_RADIUS * NODE_RADIUS):
                     return loc
         return None
-
-    def _normalize_objective_lines(self, obj: object) -> list[str]:
-
-        if isinstance(obj, str):
-            lines = [ln.strip() for ln in obj.strip().splitlines() if ln.strip()]
-            return [
-                _clean_objective_line(ln) for ln in lines if _clean_objective_line(ln)
-            ]
-
-        if isinstance(obj, dict):
-            keys = ("goal", "boss", "tip", "ability", "note", "desc", "description")
-            parts: list[str] = []
-            for k in keys:
-                v = obj.get(k)
-                if not v:
-                    continue
-                if isinstance(v, (list, tuple)):
-                    parts.extend(str(x).strip() for x in v if str(x).strip())
-                else:
-                    parts.extend(ln.strip() for ln in str(v).splitlines() if ln.strip())
-            return [
-                _clean_objective_line(part)
-                for part in parts
-                if _clean_objective_line(part)
-            ]
-
-        if isinstance(obj, (list, tuple)):
-            return [
-                _clean_objective_line(str(x))
-                for x in obj
-                if _clean_objective_line(str(x))
-            ]
-
-        cleaned = _clean_objective_line(str(obj))
-        return [cleaned] if cleaned else []
-
-    def _wrap_lines(self, text: str, max_chars: int = 58) -> list[str]:
-        words = text.split()
-        lines, line = [], ""
-        for w in words:
-            if len(line) + len(w) + (1 if line else 0) > max_chars:
-                if line:
-                    lines.append(line)
-                line = w
-            else:
-                line = (line + " " + w).strip()
-        if line:
-            lines.append(line)
-        return lines
 
     def _bubble_state(self, loc: LocationName, selected: bool) -> str:
         if loc not in self.unlocked:
@@ -614,48 +564,6 @@ class WorldMapScene:
             surface.blit(self._mario_shadow, shadow_rect)
         surface.blit(frame, frame.get_rect(midbottom=(pos[0], draw_y)))
 
-    def _draw_objective_card(self, surface: pygame.Surface, loc: LocationName) -> None:
-        raw = self.objectives.get(loc, "")
-        lines_src = self._normalize_objective_lines(raw)
-        if not lines_src:
-            return
-
-        locked = loc not in self.unlocked
-
-        description = " ".join(lines_src)
-        if locked:
-            prefix = "🔒 Пройдіть попередні локації, щоб розблокувати."
-            description = prefix if not description else f"{prefix} {description}"
-
-        wrapped = self._wrap_lines(description, max_chars=74)
-
-        max_text_w = 0
-        line_h = self.font_card.get_height()
-        for ln in wrapped[:4]:
-            text_w = self.font_card.size(ln)[0]
-            if text_w > max_text_w:
-                max_text_w = text_w
-
-        padding_x = 24
-        padding_y = 12
-        card_w = min(int(WIDTH * 0.86), max_text_w + padding_x * 2)
-        visible_lines = min(len(wrapped), 4)
-        card_h = padding_y * 2 + visible_lines * line_h + (visible_lines - 1) * 4
-        card = pygame.Rect(0, 0, card_w, card_h)
-        card.centerx = WIDTH // 2
-        card.bottom = HEIGHT - 20
-
-        pygame.draw.rect(surface, (255, 240, 245), card, border_radius=16)
-        pygame.draw.rect(surface, (255, 170, 190), card, 4, border_radius=16)
-
-        y = card.y + padding_y
-        x = card.x + padding_x
-        text_color = (150, 40, 70) if not locked else (140, 120, 150)
-        for ln in wrapped[:4]:
-            ln_surf = self.font_card.render(ln, True, text_color)
-            surface.blit(ln_surf, (x, y))
-            y += self.font_card.get_height() + 4
-
     def draw(self, surface: pygame.Surface, *, overlay: bool) -> None:
 
         surface.blit(self.bg, (0, 0))
@@ -672,7 +580,12 @@ class WorldMapScene:
 
         self._draw_mario(surface)
 
-        self._draw_objective_card(surface, self.locations[self.selected_idx])
+        location = self.locations[self.selected_idx]
+        self.objective_card.draw(
+            surface,
+            location,
+            locked=location not in self.unlocked,
+        )
 
     def set_progress(
         self, *, unlocked: Iterable[LocationName], completed: Iterable[LocationName]

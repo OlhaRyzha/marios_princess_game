@@ -13,6 +13,7 @@ dev = [
     "black>=25.9.0",
     "pre-commit>=4.3.0",
     "pygbag>=0.9.2,<1",
+    "pyright>=1.1.411",
     "pytest>=8.4.0",
     "pytest-cov>=7.1.0",
     "ruff>=0.14.1",
@@ -37,6 +38,11 @@ extend-exclude = '''
 addopts = "-ra"
 pythonpath = ["."]
 testpaths = ["tests"]
+
+[tool.pyright]
+include = ["game", "scripts", "tests", "main.py"]
+pythonVersion = "3.13"
+typeCheckingMode = "standard"
 
 [tool.coverage.run]
 branch = true

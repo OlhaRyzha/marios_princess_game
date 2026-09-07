@@ -52,6 +52,7 @@ class ConfettiBurst(pygame.sprite.Sprite):
     ):
         super().__init__()
         self.time_source = time_source
+        self.image = pygame.Surface((1, 1), pygame.SRCALPHA)
         self.rect = rect.copy()
         self.start_ms = self.time_source.now_ms()
         self.particles = []

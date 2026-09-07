@@ -1,9 +1,7 @@
 import asyncio
 import random
 import sys
-from collections.abc import Mapping
 from pathlib import Path
-from typing import cast
 
 import pygame
 
@@ -123,9 +121,8 @@ class GameRuntime:
 
         self.menu = StartMenu()
         self.menu.set_controls(CONTROLS)
-        mapped_objectives = cast(Mapping[LocationName, object], OBJECTIVES)
         self.world_map = WorldMapScene(
-            objectives=mapped_objectives,
+            objectives=OBJECTIVES,
             boss_thumbs=_build_boss_thumbs(),
             unlocked=self.state.progress.unlocked,
             completed=self.state.progress.completed,

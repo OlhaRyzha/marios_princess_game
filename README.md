@@ -44,9 +44,11 @@ required.
 | `make run` | Start the desktop game |
 | `make format` | Apply Ruff fixes and Black formatting |
 | `make lint` | Run Ruff checks |
+| `make typecheck` | Run Pyright static type checks |
 | `make test` | Run the test suite with headless SDL |
 | `make coverage` | Run tests with the 60% branch coverage threshold |
 | `make check` | Check formatting, lint, and tests |
+| `make web-check` | Build and validate the itch.io archive |
 | `make pre-commit-install` | Install commit and push hooks |
 | `make pre-commit` | Run every pre-commit hook |
 
