@@ -119,8 +119,3 @@ any time to switch language; Ukrainian is the default.
 
 Read [CONTRIBUTING.md](CONTRIBUTING.md) before making changes. It describes the
 branch workflow, code quality rules, test layout, and review checklist.
-
-## License
-
-Source code is available under the [MIT License](LICENSE). Third-party assets
-are excluded from that license; see [ASSET_LICENSES.md](ASSET_LICENSES.md).
