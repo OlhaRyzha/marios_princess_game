@@ -14,7 +14,7 @@ class MenuAction(StrEnum):
 
 @dataclass(frozen=True, slots=True)
 class MenuItem:
-    label: str
+    label_key: str
     action: MenuAction
 
 

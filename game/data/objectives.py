@@ -1,60 +1,86 @@
 from dataclasses import dataclass
 
 from game.data.locations import LocationName
+from game.i18n import LocalizedText, Localizer
 
 
 @dataclass(frozen=True, slots=True)
 class ObjectiveConfig:
     title: str
-    description: tuple[str, ...]
-    boss_hints: tuple[str, ...]
+    description: tuple[LocalizedText, ...]
+    boss_hints: tuple[LocalizedText, ...]
 
-    @property
-    def lines(self) -> tuple[str, ...]:
-        return self.description + self.boss_hints
+    def lines(self, localizer: Localizer) -> tuple[str, ...]:
+        return tuple(
+            localizer.resolve(line) for line in self.description + self.boss_hints
+        )
 
 
 OBJECTIVES: dict[LocationName, ObjectiveConfig] = {
     "sunny_meadows": ObjectiveConfig(
         title="Sunny Meadows",
         description=(
-            "Сонячні луки повні ям і хитких платформ — будь обережна, принцесо!",
-            "Збери 3 Королівські значки, сховані між квітами й кущами.",
-            "Пройди шлях до воріт, що ведуть у таємничий грибний ліс.",
+            LocalizedText(
+                "Остерігайся ям і хитких платформ.",
+                "Watch for pits and unstable platforms.",
+            ),
+            LocalizedText("Збери 3 Королівські значки.", "Collect 3 Royal Badges."),
+            LocalizedText(
+                "Дістанься воріт у грибний ліс.", "Reach the gate to Mushroom Woods."
+            ),
         ),
         boss_hints=(
-            "Міні-бос: Wooden Thwomp — важкий дерев’яний велетень; бий, коли він застряг у землі!",
+            LocalizedText(
+                "Wooden Thwomp вразливий після удару об землю.",
+                "Wooden Thwomp is vulnerable after hitting the ground.",
+            ),
         ),
     ),
     "mushroom_woods": ObjectiveConfig(
         title="Mushroom Woods",
         description=(
-            "Грибний ліс повен таємниць: бережись отруйних калюж і розумних грибів-вимикачів.",
-            "Збери всі фрукти, щоб розбудити лісового боса!",
-            "У глибині лісу схований шахтний ліфт до кришталевих печер.",
+            LocalizedText("Остерігайся отруйних калюж.", "Avoid the poisonous pools."),
+            LocalizedText("Збери всі чарівні фрукти.", "Collect every Magic Fruit."),
+            LocalizedText(
+                "Знайди шлях до кришталевих печер.", "Find the route to Crystal Caves."
+            ),
         ),
         boss_hints=(
-            "Міні-бос: Fungus Troll — велетень із грибною шапкою; стрибай, коли його тупіт здіймає хвилі!",
+            LocalizedText(
+                "Стрибай через хвилі Fungus Troll.",
+                "Jump over the waves created by Fungus Troll.",
+            ),
         ),
     ),
     "crystal_caves": ObjectiveConfig(
         title="Crystal Caves",
         description=(
-            "Кришталеві печери сяють і ковзають — остерігайся сталактитів.",
-            "Збери всі сніжинки, щоб матеріалізувати боса!",
-            "У самому серці печер чекає Kamek — чаклун призм і тіней.",
+            LocalizedText(
+                "Остерігайся льоду та сталактитів.",
+                "Watch for ice and falling stalactites.",
+            ),
+            LocalizedText(
+                "Збери всі кришталеві сніжинки.", "Collect every Crystal Flake."
+            ),
+            LocalizedText(
+                "Знайди Маріо в серці печер.", "Find Mario in the heart of the caves."
+            ),
         ),
         boss_hints=(
-            "Golem Geode — кам’яний велет із сяючими ядрами; відбивай промені Kamek у чарівні призми!",
+            LocalizedText(
+                "Здолай Golem Geode і Crystal Bats.",
+                "Defeat Golem Geode and Crystal Bats.",
+            ),
         ),
     ),
 }
 
 
-CONTROLS: tuple[str, ...] = (
-    "РУХ: ←/→",
-    "СТРИБОК: Space",
-    "ПРИСІСТИ: ↓",
-    "АТАКА Heartburst: J",
-    "Пауза/назад: Esc",
+CONTROLS: tuple[LocalizedText, ...] = (
+    LocalizedText("РУХ: ←/→", "MOVE: ←/→"),
+    LocalizedText("СТРИБОК: Space", "JUMP: Space"),
+    LocalizedText("ПРИСІСТИ: ↓", "CROUCH: ↓"),
+    LocalizedText("АТАКА Heartburst: J", "HEARTBURST: J"),
+    LocalizedText("ПАУЗА/НАЗАД: Esc", "PAUSE/BACK: Esc"),
+    LocalizedText("МОВА: L", "LANGUAGE: L"),
 )

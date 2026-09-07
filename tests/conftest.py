@@ -5,6 +5,7 @@ import pygame
 import pytest
 
 from game.app import GameRuntime
+from tests.factories.progress import MemoryProgressStore
 
 os.environ.setdefault("SDL_VIDEODRIVER", "dummy")
 os.environ.setdefault("SDL_AUDIODRIVER", "dummy")
@@ -24,7 +25,7 @@ def pygame_runtime() -> Iterator[None]:
 def game_runtime(pygame_runtime: None) -> Iterator[GameRuntime]:
     """Create a runtime while keeping global Pygame cleanup in one fixture."""
     pygame.event.clear()
-    runtime = GameRuntime(is_web=False)
+    runtime = GameRuntime(is_web=False, progress_store=MemoryProgressStore())
     yield runtime
     pygame.event.clear()
     runtime.audio_service.stop_music()

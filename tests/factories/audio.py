@@ -8,6 +8,7 @@ class RecordingAudioService:
     stop_count: int = 0
     arm_count: int = 0
     armed: bool = False
+    muted: bool = False
 
     def arm(self) -> bool:
         self.arm_count += 1
@@ -19,3 +20,7 @@ class RecordingAudioService:
 
     def stop_music(self) -> None:
         self.stop_count += 1
+
+    def toggle_muted(self) -> bool:
+        self.muted = not self.muted
+        return self.muted

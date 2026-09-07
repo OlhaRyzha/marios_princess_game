@@ -2,6 +2,7 @@ import random
 
 import pygame
 
+from game.i18n import Localizer
 from game.scene_factory import SceneFactory
 from game.utils.constants import MUSIC_LEVEL
 from tests.factories.audio import RecordingAudioService
@@ -24,6 +25,7 @@ def test_scene_factory_connects_dependencies_and_starts_level_music(
         input_source=input_source,
         rng=rng,
         audio_service=audio_service,
+        localizer=Localizer(),
     )
 
     scene = factory.create_game_scene(

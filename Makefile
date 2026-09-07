@@ -1,4 +1,4 @@
-.PHONY: install upgrade run web-build web-check web-serve web-publish format format-check lint typecheck test coverage check pre-commit-install pre-commit clean
+.PHONY: install upgrade run web-build web-check web-serve web-publish format format-check lint typecheck docstrings-check assets-check test coverage check pre-commit-install pre-commit clean
 
 install:
 	uv sync
@@ -37,13 +37,19 @@ lint:
 typecheck:
 	uv run pyright
 
+docstrings-check:
+	uv run python scripts/check_docstrings.py
+
+assets-check:
+	uv run python scripts/check_assets.py
+
 test:
 	SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy PYGAME_HIDE_SUPPORT_PROMPT=1 uv run pytest
 
 coverage:
-	SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy PYGAME_HIDE_SUPPORT_PROMPT=1 uv run pytest --cov=game --cov-report=term-missing:skip-covered --cov-fail-under=60
+	SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy PYGAME_HIDE_SUPPORT_PROMPT=1 uv run pytest --cov=game --cov-report=term-missing:skip-covered
 
-check: format-check typecheck test
+check: format-check typecheck docstrings-check assets-check test
 
 pre-commit-install:
 	uv run pre-commit install

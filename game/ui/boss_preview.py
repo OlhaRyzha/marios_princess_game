@@ -4,6 +4,7 @@ from pathlib import Path
 import pygame
 
 from game.data.bosses import BossConfig
+from game.i18n import Localizer
 from game.utils.constants import FONT_SIZE, HEIGHT, WIDTH
 from game.utils.fonts import load_font
 from game.utils.images import load_image
@@ -18,9 +19,11 @@ class BossPreview:
     def __init__(
         self,
         font: pygame.font.Font,
+        localizer: Localizer | None = None,
         on_select: Callable[[BossConfig], None] | None = None,
     ):
         self.font = font
+        self.localizer = localizer or Localizer()
         self.active = False
         self._items: list[BossConfig] = []
         self._idx = 0
@@ -95,9 +98,12 @@ class BossPreview:
 
         y = text_area.y + title.get_height() + 12
         sections = (
-            ("Опис:", data.about),
-            ("Як бити:", data.strategy),
-            ("Ціль:", data.goal),
+            (self.localizer.text("boss.about"), self.localizer.resolve(data.about)),
+            (
+                self.localizer.text("boss.strategy"),
+                self.localizer.resolve(data.strategy),
+            ),
+            (self.localizer.text("boss.goal"), self.localizer.resolve(data.goal)),
         )
         for label, text in sections:
             lab = self.small.render(label, True, (60, 70, 90))
@@ -109,7 +115,9 @@ class BossPreview:
             y += 8
 
         hint = self.small.render(
-            "←/→ — змінити • Enter — обрати • Esc — закрити", True, (80, 90, 110)
+            self.localizer.text("boss.hint"),
+            True,
+            (80, 90, 110),
         )
         surface.blit(hint, (text_area.x, inner.bottom - hint.get_height()))
         page = self.small.render(

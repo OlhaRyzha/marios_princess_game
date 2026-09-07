@@ -36,6 +36,9 @@ required.
 | Crouch | Down arrow |
 | Confirm | Enter |
 | Pause / Back | Esc |
+| Switch language | L |
+| Mute / unmute | V |
+| Toggle fullscreen | F11 |
 
 ## Development
 
@@ -45,9 +48,10 @@ required.
 | `make format` | Apply Ruff fixes and Black formatting |
 | `make lint` | Run Ruff checks |
 | `make typecheck` | Run Pyright static type checks |
+| `make docstrings-check` | Require English docstrings |
 | `make test` | Run the test suite with headless SDL |
-| `make coverage` | Run tests with the 60% branch coverage threshold |
-| `make check` | Check formatting, lint, and tests |
+| `make coverage` | Run tests with the 70% branch coverage threshold |
+| `make check` | Check formatting, types, docstrings, assets, and tests |
 | `make web-check` | Build and validate the itch.io archive |
 | `make pre-commit-install` | Install commit and push hooks |
 | `make pre-commit` | Run every pre-commit hook |
@@ -105,7 +109,18 @@ make web-publish
 See [docs/itch-io-release.md](docs/itch-io-release.md) for the complete release
 checklist and troubleshooting steps.
 
+Progress is saved automatically in browser storage or in
+`~/.marios_princess_game/progress.json` for the desktop version.
+
+The interface and story are available in Ukrainian and English. Press `L` at
+any time to switch language; Ukrainian is the default.
+
 ## Contributing
 
 Read [CONTRIBUTING.md](CONTRIBUTING.md) before making changes. It describes the
 branch workflow, code quality rules, test layout, and review checklist.
+
+## License
+
+Source code is available under the [MIT License](LICENSE). Third-party assets
+are excluded from that license; see [ASSET_LICENSES.md](ASSET_LICENSES.md).

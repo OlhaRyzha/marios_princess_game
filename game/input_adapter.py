@@ -1,8 +1,10 @@
+from collections.abc import Callable
 from typing import Protocol
 
 import pygame
 
 from game.controller import ControllerEffect, GameController
+from game.i18n import Localizer
 from game.services.audio import AudioService
 from game.state import GameMode
 from game.systems.input_state import InputSource
@@ -23,14 +25,18 @@ class InputAdapter[SceneT: EventScene]:
         world_map: WorldMapScene,
         audio_service: AudioService,
         input_source: InputSource,
+        localizer: Localizer,
         is_web: bool,
+        toggle_fullscreen: Callable[[], None] | None = None,
     ) -> None:
         self.controller = controller
         self.menu = menu
         self.world_map = world_map
         self.audio_service = audio_service
         self.input_source = input_source
+        self.localizer = localizer
         self.is_web = is_web
+        self.toggle_fullscreen = toggle_fullscreen
 
     def route(self, event: pygame.event.Event) -> ControllerEffect | None:
         state = self.controller.state
@@ -49,6 +55,15 @@ class InputAdapter[SceneT: EventScene]:
                 state.audio_armed = self.audio_service.arm()
 
         if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_l:
+                self.localizer.toggle()
+                return None
+            if event.key == pygame.K_v:
+                self.audio_service.toggle_muted()
+                return None
+            if event.key == pygame.K_F11 and self.toggle_fullscreen:
+                self.toggle_fullscreen()
+                return None
             if event.key == pygame.K_m and self.controller.toggle_map():
                 return None
             if (

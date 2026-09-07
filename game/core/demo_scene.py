@@ -7,7 +7,8 @@ from pygame.sprite import Group
 
 from game.core.background import ParallaxBackground
 from game.core.boss_actor import BossActor
-from game.core.collectible import Collectible
+from game.core.camera import LevelCamera
+from game.core.collectible_system import CollectibleSystem
 from game.core.collision import CollisionSprite, collide_mask
 from game.core.combat import CombatSystem
 from game.core.effects import ConfettiBurst, HitSpark
@@ -15,8 +16,8 @@ from game.core.finale import FinaleCinematic
 from game.core.obstacle_factory import boss_gate_position, build_obstacles
 from game.core.player import Princess
 from game.data.bosses import BOSS_ROSTER, BossConfig
-from game.data.collectibles import COLLECTIBLE_SETS
 from game.data.locations import NEXT_LOCATION, LocationName
+from game.i18n import Localizer
 from game.services.audio import AudioService
 from game.systems.input_state import InputSource
 from game.systems.time_source import TimeSource
@@ -28,7 +29,6 @@ from game.utils.constants import (
     DAMAGE_PER_HIT,
     FONT_SIZE,
     GROUND_Y,
-    HELP_TEXT,
     LEVEL_WIDTH,
     MUSIC_BOSS,
     MUSIC_LEVEL,
@@ -37,11 +37,13 @@ from game.utils.constants import (
     WIDTH,
 )
 from game.utils.fonts import load_font
-from game.utils.images import scale_to_height
-from game.utils.paths import resolve_project_path
 
 
 class DemoScene:
+    @staticmethod
+    def _post_quit_event() -> None:
+        pygame.event.post(pygame.event.Event(pygame.QUIT))
+
     def __init__(
         self,
         screen: pygame.Surface,
@@ -51,6 +53,7 @@ class DemoScene:
         input_source: InputSource,
         rng: random.Random,
         audio_service: AudioService,
+        localizer: Localizer | None = None,
         on_location_completed: Callable[[LocationName], None] | None = None,
     ):
         self.screen = screen
@@ -58,6 +61,7 @@ class DemoScene:
         self.input_source = input_source
         self.rng = rng
         self.audio_service = audio_service
+        self.localizer = localizer or Localizer()
         self.bg = ParallaxBackground(location)
 
         self.START_X = 240
@@ -70,7 +74,11 @@ class DemoScene:
         self.boss_group: Group = Group()
         self.fx_group: Group = Group()
         self.projectiles: Group = Group()
-        self.collectibles: Group = Group()
+        self.collectible_system = CollectibleSystem(
+            rng=self.rng,
+            localizer=self.localizer,
+        )
+        self.collectibles = self.collectible_system.sprites
         self.all_sprites.add(self.player)
 
         self.combat = CombatSystem(
@@ -86,27 +94,24 @@ class DemoScene:
         self.boss_gate_x = 0
         self._boss_trigger_rect = pygame.Rect(0, 0, 48, self.screen.get_height())
 
-        self.camera_x = 0.0
+        self.camera = LevelCamera(WIDTH, LEVEL_WIDTH)
         self.font = load_font(FONT_SIZE)
-        self.tip = self.font.render(HELP_TEXT, True, (230, 230, 230))
         self.hud = HealthHUD()
 
         self.mode = "explore"
         self.current_boss: BossConfig | None = None
         self._completion_reported = False
         self._on_location_completed = on_location_completed
-        self.boss_preview = BossPreview(self.font, on_select=self._on_boss_selected)
+        self.boss_preview = BossPreview(
+            self.font,
+            localizer=self.localizer,
+            on_select=self._on_boss_selected,
+        )
         self._boss_intro_shown = False
 
         self.victory_modal: VictoryModal | None = None
         self.finale = FinaleCinematic(duration_ms=3200, font_size=FONT_SIZE)
         self._pending_final_modal: tuple[str, list[str]] | None = None
-        self.collectible_goal = 0
-        self.collectibles_collected = 0
-        self.collectible_icon: pygame.Surface | None = None
-        self.collectible_label: str = ""
-        self.collectible_hint_line: str = ""
-        self.collectible_progress_text: str = ""
         self._collectible_hint_timer: float = 0.0
         self._collectible_hint_text: str = ""
 
@@ -132,61 +137,11 @@ class DemoScene:
             self.obstacles.add(*new_obstacles)
             self.all_sprites.add(*new_obstacles)
 
-        self._spawn_collectibles(location)
+        self.collectible_system.load(location)
         self.boss_gate_x = boss_gate_position(max_right)
         self._boss_trigger_rect = pygame.Rect(
             self.boss_gate_x, 0, 48, self.screen.get_height()
         )
-
-    def _spawn_collectibles(self, location: LocationName) -> None:
-        for sprite in self.collectibles.sprites():
-            sprite.kill()
-        self.collectibles.empty()
-        self.collectibles_collected = 0
-        self.collectible_goal = 0
-        self.collectible_icon = None
-        self.collectible_label = ""
-        self.collectible_hint_line = ""
-        self.collectible_progress_text = ""
-        self._collectible_hint_text = ""
-        setup = COLLECTIBLE_SETS.get(location)
-        if not setup:
-            return
-
-        world_surface: pygame.Surface | None = None
-        icon_surface: pygame.Surface | None = None
-        if setup.image_path:
-            try:
-                raw = pygame.image.load(
-                    resolve_project_path(setup.image_path)
-                ).convert_alpha()
-                world_surface = scale_to_height(raw, setup.world_height)
-                icon_surface = scale_to_height(raw, setup.icon_height)
-            except (FileNotFoundError, OSError, pygame.error):
-                world_surface = None
-                icon_surface = None
-
-        for pos in setup.positions:
-            item = Collectible(setup.kind, pos, rng=self.rng, surface=world_surface)
-            self.collectibles.add(item)
-
-        self.collectible_goal = len(setup.positions)
-        if icon_surface is not None:
-            self.collectible_icon = icon_surface.copy()
-        else:
-            self.collectible_icon = Collectible.icon(setup.kind, size=26)
-        self.collectible_label = setup.label
-        self.collectible_hint_line = setup.hint
-        self._update_collectible_progress()
-
-    def _update_collectible_progress(self) -> None:
-        if self.collectible_goal:
-            self.collectible_progress_text = (
-                f"{self.collectible_label}: "
-                f"{self.collectibles_collected}/{self.collectible_goal}"
-            )
-        else:
-            self.collectible_progress_text = ""
 
     def handle_event(self, event: pygame.event.Event) -> None:
         if self.victory_modal and self.victory_modal.active:
@@ -196,9 +151,15 @@ class DemoScene:
             self.boss_preview.handle_key(event)
 
     def _update_camera(self):
-        self.camera_x = max(
-            0.0, min(self.player.pos.x - WIDTH * 0.5, LEVEL_WIDTH - WIDTH)
-        )
+        self.camera.follow(self.player.pos.x)
+
+    @property
+    def camera_x(self) -> float:
+        return self.camera.x
+
+    @camera_x.setter
+    def camera_x(self, value: float) -> None:
+        self.camera.x = value
 
     def _sync_player_rect(self) -> None:
         self.player.rect.midbottom = (int(self.player.pos.x), int(self.player.pos.y))
@@ -226,18 +187,21 @@ class DemoScene:
 
         nxt = NEXT_LOCATION.get(self.location)
         if nxt:
-            title = "You win!"
+            title = self.localizer.text("victory.title")
             lines = [
-                "Ти здолала боса!",
+                self.localizer.text("victory.boss"),
                 "",
-                "Ціль наступного рівня: подолати перепони та перемогти боса, щоб врятувати Маріо.",
-                f"Далі: {nxt.replace('_', ' ').title()}",
+                self.localizer.text("victory.next_goal"),
+                self.localizer.text(
+                    "victory.next", location=nxt.replace("_", " ").title()
+                ),
             ]
             next_location = cast(LocationName, nxt)
             modal = VictoryModal(
                 title=title,
                 lines=lines,
                 on_continue=lambda: self.switch_location(next_location),
+                localizer=self.localizer,
             )
             self.victory_modal = modal
             self.mode = "victory"
@@ -245,11 +209,11 @@ class DemoScene:
             self.finale.ensure_assets()
             self.finale.start(self.time_source.now_ms())
             self._pending_final_modal = (
-                "You win!",
+                self.localizer.text("victory.title"),
                 [
-                    "Ти здолала фінального боса!",
-                    "Кришталева клітка розсипається — Маріо вільний.",
-                    "Свято, конфеті і нові пригоди попереду!",
+                    self.localizer.text("victory.final_boss"),
+                    self.localizer.text("victory.mario_free"),
+                    self.localizer.text("victory.celebrate"),
                 ],
             )
             self.mode = "finale"
@@ -320,35 +284,19 @@ class DemoScene:
             self.player.rect.x = int(self.player.pos.x)
 
     def _collect_collectibles(self):
-        if self.mode != "explore" or not self.collectible_goal:
+        if self.mode != "explore":
             return
-        hits = [
-            item
-            for item in self.collectibles
-            if self.player.rect.colliderect(item.rect)
-        ]
-        if hits:
-            for item in hits:
-                item.kill()
-                self.fx_group.add(
-                    HitSpark(item.rect.center, time_source=self.time_source)
-                )
-            self.collectibles_collected += len(hits)
-            if self.collectibles_collected > self.collectible_goal:
-                self.collectibles_collected = self.collectible_goal
-            self._update_collectible_progress()
+        for position in self.collectible_system.collect(self.player.rect):
+            self.fx_group.add(HitSpark(position, time_source=self.time_source))
 
     def _check_boss_gate(self):
         if self._boss_intro_shown or self.mode != "explore":
             return
         if self.player.rect.right >= self._boss_trigger_rect.left:
-            if (
-                self.collectible_goal
-                and self.collectibles_collected < self.collectible_goal
-            ):
+            if not self.collectible_system.complete:
                 self._collectible_hint_text = (
-                    f"{self.collectible_hint_line} "
-                    f"({self.collectibles_collected}/{self.collectible_goal})"
+                    f"{self.collectible_system.hint} "
+                    f"({self.collectible_system.collected}/{self.collectible_system.goal})"
                 )
                 self._collectible_hint_timer = 2.6
                 return
@@ -365,7 +313,7 @@ class DemoScene:
         self.player.pos.update(self.START_X, GROUND_Y)
         self._sync_player_rect()
 
-        self.camera_x = 0
+        self.camera.reset()
         self.mode = "explore"
         self._boss_intro_shown = False
         self._completion_reported = False
@@ -405,11 +353,10 @@ class DemoScene:
                     modal = VictoryModal(
                         title=title,
                         lines=lines,
-                        on_continue=lambda: pygame.event.post(
-                            pygame.event.Event(pygame.QUIT)
-                        ),
+                        on_continue=self._post_quit_event,
+                        localizer=self.localizer,
                     )
-                    modal.footer_text = "Натисни Enter, щоб завершити гру"
+                    modal.footer_text = self.localizer.text("victory.finish")
                     self.victory_modal = modal
                     self._pending_final_modal = None
                 self.finale.reset()
@@ -485,12 +432,9 @@ class DemoScene:
             self.player.draw(self.screen, self.camera_x)
             hud_progress = None
             icon = None
-            if self.collectible_goal:
-                hud_progress = (
-                    self.collectibles_collected,
-                    self.collectible_goal,
-                )
-                icon = self.collectible_icon
+            if self.collectible_system.goal:
+                hud_progress = self.collectible_system.progress
+                icon = self.collectible_system.icon
             self.hud.draw(
                 self.screen,
                 self.player.health,
@@ -500,7 +444,10 @@ class DemoScene:
             )
             if self.mode == "boss":
                 self._draw_boss_hp()
-            self.screen.blit(self.tip, (16, 12))
+            tip = self.font.render(
+                self.localizer.text("game.help"), True, (230, 230, 230)
+            )
+            self.screen.blit(tip, (16, 12))
             if self._collectible_hint_timer > 0.0 and self._collectible_hint_text:
                 hint = self.font.render(
                     self._collectible_hint_text, True, (255, 236, 210)

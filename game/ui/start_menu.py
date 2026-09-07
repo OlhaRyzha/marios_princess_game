@@ -1,3 +1,4 @@
+import logging
 import os
 from collections.abc import Sequence
 
@@ -5,10 +6,12 @@ import pygame
 
 from game.actions import MenuAction, MenuItem
 from game.data.start_menu import MAIN_MENU_ITEMS
+from game.i18n import LocalizedText, Localizer
 from game.utils.constants import BACKGROUNDS_DIR, FONT_SIZE, HEIGHT, WIDTH
 from game.utils.fonts import load_font
 
 MENU_BG_PATH = os.path.join(BACKGROUNDS_DIR, "mushroom_woods", "sky.png")
+logger = logging.getLogger(__name__)
 
 TITLE_TEXT = "Mario’s Princess"
 
@@ -25,7 +28,7 @@ def _load_image(path: str) -> pygame.Surface:
     try:
         img = pygame.image.load(path).convert_alpha()
     except (FileNotFoundError, OSError, pygame.error) as e:
-        print(f"[MENU] Не вдалося завантажити фон: {path} -> {e}")
+        logger.warning("Could not load menu background %s: %s", path, e)
         img = pygame.Surface((WIDTH, HEIGHT))
         img.fill((255, 200, 210))
     return pygame.transform.smoothscale(img, (WIDTH, HEIGHT))
@@ -48,7 +51,8 @@ def _rounded_rect(
 
 
 class StartMenu:
-    def __init__(self) -> None:
+    def __init__(self, localizer: Localizer | None = None) -> None:
+        self.localizer = localizer or Localizer()
         self.bg = _load_image(MENU_BG_PATH)
 
         self.font_title = load_font(int(FONT_SIZE * 2.4))
@@ -65,17 +69,18 @@ class StartMenu:
         self.set_items(MAIN_MENU_ITEMS)
 
         self.controls_open: bool = False
-        self.controls_lines: list[str] = ["—"]
+        self.controls_lines: list[str | LocalizedText] = ["—"]
 
     def set_items(self, items: Sequence[MenuItem]) -> None:
         self.items = list(items)
         self.btn_rects = self._build_button_rects()
 
-    def set_controls(self, text: str | Sequence[str]) -> None:
+    def set_controls(self, text: str | Sequence[str | LocalizedText]) -> None:
+        self.controls_lines.clear()
         if isinstance(text, str):
-            self.controls_lines = text.splitlines()
+            self.controls_lines.extend(text.splitlines())
         else:
-            self.controls_lines = list(text)
+            self.controls_lines.extend(text)
 
     def open_controls(self) -> None:
         self.controls_open = True
@@ -131,7 +136,7 @@ class StartMenu:
         )
 
     def _draw_hints(self, surface: pygame.Surface) -> None:
-        hint = "↑/↓ — вибір   |   Enter — підтвердити   |   Esc — вихід   |   M — мапа"
+        hint = self.localizer.text("menu.hint")
         s1 = self.font_hint.render(hint, True, (100, 70, 80))
         s2 = self.font_hint.render(hint, True, (255, 235, 240))
         x = WIDTH // 2 - s2.get_width() // 2
@@ -153,18 +158,27 @@ class StartMenu:
         _rounded_rect(surface, card, pygame.Color(255, 240, 245), 18)
         pygame.draw.rect(surface, (255, 170, 190), card, 4, border_radius=18)
 
-        title = self.font_title.render("Команди", True, (180, 60, 90))
+        title = self.font_title.render(
+            self.localizer.text("controls.title"), True, (180, 60, 90)
+        )
         surface.blit(title, (card.centerx - title.get_width() // 2, card.y + 18))
 
         lines = self.controls_lines or ["—"]
         y = card.y + 86
         x_pad = card.x + 28
         for line in lines:
-            text_surf = self.font_hint.render(str(line), True, (150, 40, 70))
+            resolved_line = (
+                self.localizer.resolve(line)
+                if isinstance(line, LocalizedText)
+                else line
+            )
+            text_surf = self.font_hint.render(resolved_line, True, (150, 40, 70))
             surface.blit(text_surf, (x_pad, y))
             y += int(self.font_hint.get_height() * 1.35)
 
-        footer = self.font_hint.render("Enter / Esc — закрити", True, (90, 60, 80))
+        footer = self.font_hint.render(
+            self.localizer.text("controls.close"), True, (90, 60, 80)
+        )
         surface.blit(
             footer,
             (
@@ -217,7 +231,12 @@ class StartMenu:
         self._draw_title(surface)
 
         for i, (item, rect) in enumerate(zip(self.items, self.btn_rects, strict=True)):
-            self._draw_button(surface, rect, item.label, selected=(i == self.selected))
+            self._draw_button(
+                surface,
+                rect,
+                self.localizer.text(item.label_key),
+                selected=(i == self.selected),
+            )
 
         self._draw_hints(surface)
 

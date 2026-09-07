@@ -20,7 +20,6 @@ TARGET_H = 220
 
 FONT_NAME = "arialunicode"
 FONT_SIZE = 22
-HELP_TEXT = "←/→ move, space — jump, ↓ — crouch, j — attack"
 
 
 BASE_DIR = Path(__file__).resolve().parents[2]

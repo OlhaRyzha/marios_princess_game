@@ -1,6 +1,7 @@
 import pygame
 
 from game.app import GameRuntime
+from game.i18n import Language
 from game.state import GameMode
 from tests.factories.audio import RecordingAudioService
 
@@ -56,3 +57,13 @@ def test_web_input_arms_audio_once(game_runtime: GameRuntime) -> None:
     assert game_runtime.state.audio_armed
     assert audio_service.armed
     assert audio_service.arm_count == 1
+
+
+def test_language_key_toggles_shared_localizer(game_runtime: GameRuntime) -> None:
+    assert game_runtime.localizer.language is Language.UK
+    pygame.event.post(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_l))
+
+    game_runtime.tick()
+
+    assert game_runtime.localizer.language is Language.EN
+    assert game_runtime.menu.localizer.language is Language.EN

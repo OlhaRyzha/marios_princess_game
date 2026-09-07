@@ -18,6 +18,7 @@ behavior changes. Before opening a pull request, run:
 make format
 make check
 make coverage
+make web-check
 ```
 
 ## Code structure
@@ -29,6 +30,9 @@ make coverage
 - Put shared test lifecycle in fixtures and reusable object construction in
   `tests/factories/`.
 - Import from the defining module. Do not create proxy package exports.
+- Write code comments and docstrings in English.
+- Put player-facing text in `game/i18n.py` or use `LocalizedText`; provide both
+  Ukrainian and English text.
 
 Missing optional images may use the documented fallback and must log the full
 resolved path. Required gameplay assets should fail with a precise error.

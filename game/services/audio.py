@@ -17,8 +17,13 @@ class AudioService(Protocol):
 
     def stop_music(self) -> None: ...
 
+    def toggle_muted(self) -> bool: ...
+
 
 class PygameAudioService:
+    def __init__(self) -> None:
+        self.muted = False
+
     def arm(self) -> bool:
         if pygame.mixer.get_init():
             return True
@@ -35,7 +40,7 @@ class PygameAudioService:
         resolved_path = resolve_project_path(path)
         try:
             pygame.mixer.music.load(resolved_path)
-            pygame.mixer.music.set_volume(MUSIC_VOLUME)
+            pygame.mixer.music.set_volume(0.0 if self.muted else MUSIC_VOLUME)
             pygame.mixer.music.play(-1 if loop else 0)
         except (FileNotFoundError, OSError, pygame.error) as error:
             logger.warning("Could not play music %s: %s", resolved_path, error)
@@ -47,3 +52,9 @@ class PygameAudioService:
             pygame.mixer.music.stop()
         except pygame.error as error:
             logger.warning("Could not stop music: %s", error)
+
+    def toggle_muted(self) -> bool:
+        self.muted = not self.muted
+        if pygame.mixer.get_init():
+            pygame.mixer.music.set_volume(0.0 if self.muted else MUSIC_VOLUME)
+        return self.muted

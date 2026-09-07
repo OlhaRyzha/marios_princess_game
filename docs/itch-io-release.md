@@ -13,8 +13,9 @@ make check
 make coverage
 ```
 
-Run `make run` and verify the menu, movement, jumping, pause, boss selection,
-shooting with `J`, victory, and level unlocking.
+Run `make run` and verify the menu, both languages (`L`), movement, jumping,
+pause, mute (`V`), boss selection, shooting with `J`, victory, progress saving,
+and level unlocking.
 
 ## Build and test the web version
 

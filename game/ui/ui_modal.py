@@ -1,15 +1,26 @@
+from collections.abc import Callable
+
 import pygame
 
+from game.i18n import Localizer
 from game.utils.constants import FONT_SIZE, HEIGHT, VICTORY_DIM_COLOR, WIDTH
 from game.utils.fonts import load_font
 from game.utils.images import load_image, scale_to_height
 
 
 class VictoryModal:
-    def __init__(self, *, title: str, lines: list[str], on_continue):
+    def __init__(
+        self,
+        *,
+        title: str,
+        lines: list[str],
+        on_continue: Callable[[], None] | None,
+        localizer: Localizer | None = None,
+    ):
         self.title = title
         self.lines = lines
         self.on_continue = on_continue
+        self.localizer = localizer or Localizer()
         self.active = True
         self.footer_text: str | None = None
         self.title_font = load_font(int(FONT_SIZE * 1.6))
@@ -50,7 +61,7 @@ class VictoryModal:
             wrapped = wrapped[: max_lines - 1] + ["…"]
         return wrapped
 
-    def handle_event(self, e: pygame.event.Event):
+    def handle_event(self, e: pygame.event.Event) -> None:
         if not self.active:
             return
         if e.type == pygame.KEYDOWN and e.key in (
@@ -62,7 +73,7 @@ class VictoryModal:
             if self.on_continue:
                 self.on_continue()
 
-    def draw(self, surface: pygame.Surface):
+    def draw(self, surface: pygame.Surface) -> None:
         if not self.active:
             return
         dim = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
@@ -101,9 +112,9 @@ class VictoryModal:
             footer_text
             if footer_text is not None
             else (
-                "Enter — завершити гру"
+                self.localizer.text("victory.finish")
                 if self.on_continue is None
-                else "Enter — продовжити"
+                else self.localizer.text("victory.continue")
             )
         )
         hint = self.body_font.render(hint_text, True, (120, 90, 120))

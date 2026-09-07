@@ -4,6 +4,7 @@ import pygame
 
 from game.data.locations import LocationName
 from game.data.objectives import ObjectiveConfig
+from game.i18n import Localizer
 from game.utils.constants import HEIGHT, WIDTH
 
 
@@ -28,9 +29,11 @@ class ObjectiveCard:
         *,
         font: pygame.font.Font,
         objectives: Mapping[LocationName, ObjectiveConfig],
+        localizer: Localizer,
     ) -> None:
         self.font = font
         self.objectives = dict(objectives)
+        self.localizer = localizer
 
     def draw(
         self,
@@ -43,12 +46,9 @@ class ObjectiveCard:
         if objective is None:
             return
 
-        description = " ".join(objective.lines)
+        description = " ".join(objective.lines(self.localizer))
         if locked:
-            description = (
-                "Complete the previous locations to unlock this level. "
-                f"{description}"
-            )
+            description = f'{self.localizer.text("map.locked")} {description}'
         wrapped = wrap_text(description, max_chars=74)[:4]
         if not wrapped:
             return

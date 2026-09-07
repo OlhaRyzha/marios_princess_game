@@ -4,6 +4,7 @@ import pygame
 
 from game.app import GameRuntime
 from game.data.bosses import BOSS_ROSTER
+from game.i18n import Localizer
 from game.scene_factory import SceneFactory
 from game.state import GameMode
 from game.systems.input_state import InputState
@@ -24,6 +25,7 @@ def test_attack_input_shoots_heart_during_boss_fight(
         input_source=input_source,
         rng=random.Random(2026),
         audio_service=RecordingAudioService(),
+        localizer=Localizer(),
     ).create_game_scene("sunny_meadows", on_location_completed=lambda location: None)
     scene.boss_preview.open(BOSS_ROSTER["sunny_meadows"])
     scene.handle_event(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_RETURN))

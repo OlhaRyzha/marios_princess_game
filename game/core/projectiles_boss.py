@@ -6,7 +6,7 @@ from game.utils.constants import GROUND_Y, LEVEL_WIDTH
 
 
 class GroundWave(pygame.sprite.Sprite):
-    """Плоска хвиля по землі від тупоту."""
+    """A ground wave created by a boss stomp."""
 
     SPEED = 5
     WIDTH = 38
@@ -29,7 +29,7 @@ class GroundWave(pygame.sprite.Sprite):
 
 
 class Pinecone(pygame.sprite.Sprite):
-    """Шишка з дугою польоту (парабола)."""
+    """A pine cone projectile that follows a parabolic arc."""
 
     GRAVITY = 0.35
     DAMAGE = 1
@@ -57,7 +57,7 @@ class Pinecone(pygame.sprite.Sprite):
 
 
 class BatMinion(pygame.sprite.Sprite):
-    """Малий кажан: підлітає хвилями, вразливий під час зависання."""
+    """A small bat that moves in waves and pauses while vulnerable."""
 
     SPEED_X = 2.3
     AMPL = 18

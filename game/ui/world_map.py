@@ -11,8 +11,10 @@ import pygame
 from game.actions import MapAction, MapEvent
 from game.data.locations import LOCATION_ORDER, LocationName
 from game.data.objectives import ObjectiveConfig
+from game.i18n import Localizer
 from game.systems.time_source import TimeSource
 from game.ui.objective_card import ObjectiveCard
+from game.ui.world_map_visuals import circle_image, make_bubble_surface
 from game.utils.constants import (
     ASSETS_DIR,
     BACKGROUNDS_DIR,
@@ -86,93 +88,6 @@ class FogParticle:
     phase: float
 
 
-def _lerp(a: float, b: float, t: float) -> float:
-    return a + (b - a) * t
-
-
-def _mix_color(
-    c0: tuple[int, int, int], c1: tuple[int, int, int], t: float
-) -> tuple[int, int, int]:
-    return (
-        int(_lerp(c0[0], c1[0], t)),
-        int(_lerp(c0[1], c1[1], t)),
-        int(_lerp(c0[2], c1[2], t)),
-    )
-
-
-def _scale_color(color: tuple[int, int, int], factor: float) -> tuple[int, int, int]:
-    r = max(0, min(255, int(color[0] * factor)))
-    g = max(0, min(255, int(color[1] * factor)))
-    b = max(0, min(255, int(color[2] * factor)))
-    return (r, g, b)
-
-
-def _make_bubble_surface(
-    radius: int,
-    palette: tuple[tuple[int, int, int], tuple[int, int, int]],
-    *,
-    brightness: float = 1.0,
-) -> pygame.Surface:
-    diameter = radius * 2
-    surf = pygame.Surface((diameter, diameter), pygame.SRCALPHA)
-    outer_color = _scale_color(palette[0], brightness)
-    inner_color = _scale_color(palette[1], brightness)
-    center = radius
-    steps = radius
-
-    for step in range(steps, 0, -1):
-        t = step / steps
-        color = _mix_color(inner_color, outer_color, t**1.45)
-        alpha = int(160 * (1 - t**1.8) + 30)
-        pygame.draw.circle(
-            surf,
-            (*color, max(20, min(235, alpha))),
-            (center, center),
-            step,
-        )
-
-    for offset_x, offset_y, scale, alpha in (
-        (-radius * 0.35, radius * 0.15, 0.55, int(52 * brightness)),
-        (radius * 0.28, -radius * 0.20, 0.42, int(40 * brightness)),
-        (radius * 0.05, radius * 0.35, 0.35, int(32 * brightness)),
-    ):
-        cloud_radius = max(6, int(radius * scale))
-        pygame.draw.circle(
-            surf,
-            (255, 255, 255, alpha),
-            (
-                int(center + offset_x),
-                int(center + offset_y),
-            ),
-            cloud_radius,
-        )
-
-    highlight = pygame.Surface((diameter, diameter), pygame.SRCALPHA)
-    pygame.draw.circle(
-        highlight,
-        (255, 255, 255, int(115 * brightness)),
-        (center - radius // 3, center - radius // 2),
-        radius // 2,
-    )
-    pygame.draw.circle(
-        highlight,
-        (255, 255, 255, int(42 * brightness)),
-        (center + radius // 4, center + radius // 3),
-        radius // 3,
-    )
-    surf.blit(highlight, (0, 0))
-
-    pygame.draw.circle(
-        surf,
-        (255, 255, 255, int(45 * brightness)),
-        (center, center),
-        radius - 4,
-        3,
-    )
-
-    return surf
-
-
 def _load_bg() -> pygame.Surface:
     for path in (MAP_IMAGE, FALLBACK_BG):
         if os.path.exists(path):
@@ -195,18 +110,6 @@ def _load_image(path: str | Path | None) -> pygame.Surface | None:
     except (OSError, pygame.error):
         pass
     return None
-
-
-def _circle_image(img: pygame.Surface, radius: int) -> pygame.Surface:
-
-    size = radius * 2
-    img = pygame.transform.smoothscale(img, (size, size))
-    circle = pygame.Surface((size, size), pygame.SRCALPHA)
-    pygame.draw.circle(circle, (255, 255, 255, 255), (radius, radius), radius)
-    circle.blit(img, (0, 0), special_flags=pygame.BLEND_RGBA_MIN)
-
-    pygame.draw.circle(circle, (255, 255, 255), (radius, radius), radius, 3)
-    return circle
 
 
 def _load_mario_frames(
@@ -238,9 +141,11 @@ class WorldMapScene:
         completed: Iterable[LocationName] | None = None,
         time_source: TimeSource,
         rng: random.Random,
+        localizer: Localizer | None = None,
     ) -> None:
         self.time_source = time_source
         self.rng = rng
+        self.localizer = localizer or Localizer()
         self.bg = _load_bg()
 
         self.font_title = load_font(int(FONT_SIZE * 2.0))
@@ -259,6 +164,7 @@ class WorldMapScene:
         self.objective_card = ObjectiveCard(
             font=self.font_card,
             objectives=self.objectives,
+            localizer=self.localizer,
         )
 
         self.boss_thumbs_paths: dict[str, str | Path | None] = (
@@ -293,16 +199,16 @@ class WorldMapScene:
 
     def _build_bubble_surfaces(self) -> dict[str, pygame.Surface]:
         return {
-            "idle": _make_bubble_surface(
+            "idle": make_bubble_surface(
                 NODE_RADIUS, BUBBLE_PALETTES["idle"], brightness=1.0
             ),
-            "selected": _make_bubble_surface(
+            "selected": make_bubble_surface(
                 NODE_RADIUS, BUBBLE_PALETTES["selected"], brightness=1.12
             ),
-            "completed": _make_bubble_surface(
+            "completed": make_bubble_surface(
                 NODE_RADIUS, BUBBLE_PALETTES["completed"], brightness=1.05
             ),
-            "locked": _make_bubble_surface(
+            "locked": make_bubble_surface(
                 NODE_RADIUS, BUBBLE_PALETTES["locked"], brightness=0.9
             ),
         }
@@ -515,7 +421,7 @@ class WorldMapScene:
         if selected:
             img = self.boss_thumbs_img.get(loc)
             if img:
-                icon = _circle_image(img, BOSS_THUMB_RADIUS)
+                icon = circle_image(img, BOSS_THUMB_RADIUS)
                 surface.blit(
                     icon, (cx - icon.get_width() // 2, cy - icon.get_height() // 2)
                 )
