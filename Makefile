@@ -1,4 +1,4 @@
-.PHONY: install upgrade run web-build web-serve web-publish format format-check lint test coverage check pre-commit-install pre-commit clean
+.PHONY: install upgrade run web-build web-check web-serve web-publish format format-check lint typecheck test coverage check pre-commit-install pre-commit clean
 
 install:
 	uv sync
@@ -13,6 +13,9 @@ web-build:
 	rm -rf build/web build/web.zip
 	mkdir -p build/web
 	uv run pygbag --build --archive --no_opt --template pygbag.tmpl --PYBUILD 3.13 --disable-sound-format-error .
+
+web-check: web-build
+	uv run python scripts/verify_web_build.py
 
 web-serve:
 	uv run pygbag --template pygbag.tmpl --PYBUILD 3.13 --disable-sound-format-error .
@@ -31,13 +34,16 @@ format-check:
 lint:
 	uv run ruff check .
 
+typecheck:
+	uv run pyright
+
 test:
 	SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy PYGAME_HIDE_SUPPORT_PROMPT=1 uv run pytest
 
 coverage:
 	SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy PYGAME_HIDE_SUPPORT_PROMPT=1 uv run pytest --cov=game --cov-report=term-missing:skip-covered --cov-fail-under=60
 
-check: format-check test
+check: format-check typecheck test
 
 pre-commit-install:
 	uv run pre-commit install

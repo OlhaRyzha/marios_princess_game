@@ -71,13 +71,11 @@ class StartMenu:
         self.items = list(items)
         self.btn_rects = self._build_button_rects()
 
-    def set_controls(self, text: str | list[str]) -> None:
+    def set_controls(self, text: str | Sequence[str]) -> None:
         if isinstance(text, str):
             self.controls_lines = text.splitlines()
-        elif isinstance(text, list):
-            self.controls_lines = [str(t) for t in text]
         else:
-            self.controls_lines = ["—"]
+            self.controls_lines = list(text)
 
     def open_controls(self) -> None:
         self.controls_open = True

@@ -188,12 +188,12 @@ class DemoScene:
         else:
             self.collectible_progress_text = ""
 
-    def handle_event(self, e: pygame.event.Event):
+    def handle_event(self, event: pygame.event.Event) -> None:
         if self.victory_modal and self.victory_modal.active:
-            self.victory_modal.handle_event(e)
+            self.victory_modal.handle_event(event)
             return
         if self.boss_preview and self.boss_preview.active:
-            self.boss_preview.handle_key(e)
+            self.boss_preview.handle_key(event)
 
     def _update_camera(self):
         self.camera_x = max(
@@ -322,9 +322,14 @@ class DemoScene:
     def _collect_collectibles(self):
         if self.mode != "explore" or not self.collectible_goal:
             return
-        hits = pygame.sprite.spritecollide(self.player, self.collectibles, dokill=True)
+        hits = [
+            item
+            for item in self.collectibles
+            if self.player.rect.colliderect(item.rect)
+        ]
         if hits:
             for item in hits:
+                item.kill()
                 self.fx_group.add(
                     HitSpark(item.rect.center, time_source=self.time_source)
                 )

@@ -10,7 +10,8 @@ from tests.factories.time import FakeTimeSource
 def test_hit_spark_expires_at_its_deadline(pygame_runtime: None) -> None:
     time_source = FakeTimeSource()
     spark = HitSpark((20, 30), time_source=time_source)
-    sprites = pygame.sprite.Group(spark)
+    sprites = pygame.sprite.Group()
+    sprites.add(spark)
 
     time_source.advance(HIT_SPARK_TIME_MS - 1)
     sprites.update(0.0)
@@ -28,7 +29,8 @@ def test_confetti_expires_at_its_deadline(pygame_runtime: None) -> None:
         time_source=time_source,
         rng=random.Random(42),
     )
-    sprites = pygame.sprite.Group(confetti)
+    sprites = pygame.sprite.Group()
+    sprites.add(confetti)
 
     time_source.advance(CONFETTI_TIME_MS)
     sprites.update(0.0)

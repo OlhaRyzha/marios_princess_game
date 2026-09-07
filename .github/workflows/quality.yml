@@ -20,4 +20,17 @@ jobs:
           enable-cache: true
       - run: uv sync --locked --dev
       - run: make format-check
+      - run: make typecheck
       - run: make coverage
+
+  web-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      - run: uv sync --locked --dev
+      - run: make web-check
