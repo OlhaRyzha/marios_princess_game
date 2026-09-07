@@ -19,11 +19,8 @@ class VictoryModal:
 
     def _load_avatar(self) -> None:
         path = "assets/mario/greeting.png"
-        try:
-            img = load_image(path)
-            self.avatar = scale_to_height(img, int(FONT_SIZE * 3.4))
-        except Exception:
-            self.avatar = None
+        img = load_image(path)
+        self.avatar = scale_to_height(img, int(FONT_SIZE * 3.4))
 
     @staticmethod
     def _wrap_lines(

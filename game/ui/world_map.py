@@ -3,11 +3,14 @@ import os
 import random
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
+from pathlib import Path
 from typing import cast
 
 import pygame
 
+from game.actions import MapAction, MapEvent
 from game.data.locations import LOCATION_ORDER, LocationName
+from game.systems.time_source import TimeSource
 from game.utils.constants import (
     ASSETS_DIR,
     BACKGROUNDS_DIR,
@@ -18,9 +21,7 @@ from game.utils.constants import (
 )
 from game.utils.fonts import load_font
 from game.utils.images import load_image, scale_to_height
-
-MapEvent = tuple[str, LocationName | None] | None
-
+from game.utils.paths import resolve_project_path
 
 LocationTitlePair = tuple[LocationName, str]
 
@@ -173,25 +174,23 @@ def _make_bubble_surface(
 def _load_bg() -> pygame.Surface:
     for path in (MAP_IMAGE, FALLBACK_BG):
         if os.path.exists(path):
-            try:
-                img = load_image(path, convert_alpha=False)
-                return pygame.transform.smoothscale(img, (WIDTH, HEIGHT))
-            except Exception:
-                continue
+            img = load_image(path, convert_alpha=False)
+            return pygame.transform.smoothscale(img, (WIDTH, HEIGHT))
 
     surf = pygame.Surface((WIDTH, HEIGHT))
     surf.fill((140, 160, 220))
     return surf
 
 
-def _load_image(path: str | None) -> pygame.Surface | None:
+def _load_image(path: str | Path | None) -> pygame.Surface | None:
     if not path:
         return None
+    resolved_path = resolve_project_path(path)
     try:
-        if os.path.exists(path):
-            img = pygame.image.load(path).convert_alpha()
+        if resolved_path.is_file():
+            img = pygame.image.load(resolved_path).convert_alpha()
             return img
-    except Exception:
+    except (OSError, pygame.error):
         pass
     return None
 
@@ -218,14 +217,11 @@ def _load_mario_frames(
         path = os.path.join(MARIO_DIR, name)
         if not os.path.exists(path):
             continue
-        try:
-            img = load_image(path)
-            if img and target_height:
-                frames.append(scale_to_height(img, target_height))
-            else:
-                frames.append(img)
-        except Exception:
-            continue
+        img = load_image(path)
+        if target_height:
+            frames.append(scale_to_height(img, target_height))
+        else:
+            frames.append(img)
     return frames
 
 
@@ -242,10 +238,14 @@ class WorldMapScene:
         self,
         *,
         objectives: Mapping[LocationName, object] | None = None,
-        boss_thumbs: Mapping[str, str | None] | None = None,
+        boss_thumbs: Mapping[str, str | Path | None] | None = None,
         unlocked: Iterable[LocationName] | None = None,
         completed: Iterable[LocationName] | None = None,
+        time_source: TimeSource,
+        rng: random.Random,
     ) -> None:
+        self.time_source = time_source
+        self.rng = rng
         self.bg = _load_bg()
 
         self.font_title = load_font(int(FONT_SIZE * 2.0))
@@ -262,7 +262,7 @@ class WorldMapScene:
             dict(objectives) if objectives else {}
         )
 
-        self.boss_thumbs_paths: dict[str, str | None] = (
+        self.boss_thumbs_paths: dict[str, str | Path | None] = (
             dict(boss_thumbs) if boss_thumbs else {}
         )
 
@@ -309,17 +309,16 @@ class WorldMapScene:
         }
 
     def _build_fog_particles(self) -> dict[LocationName, list[FogParticle]]:
-        rng = random.Random(0x5EA1)
         particles: dict[LocationName, list[FogParticle]] = {}
         for loc in self.locations:
             nodes = [
                 FogParticle(
-                    base_angle=rng.uniform(0.0, math.tau),
-                    radius_factor=rng.uniform(0.2, 0.9),
-                    speed=rng.uniform(0.45, 0.85),
-                    wobble=rng.uniform(0.55, 0.95),
-                    size=rng.randint(3, 7),
-                    phase=rng.uniform(0.0, math.tau),
+                    base_angle=self.rng.uniform(0.0, math.tau),
+                    radius_factor=self.rng.uniform(0.2, 0.9),
+                    speed=self.rng.uniform(0.45, 0.85),
+                    wobble=self.rng.uniform(0.55, 0.95),
+                    size=self.rng.randint(3, 7),
+                    phase=self.rng.uniform(0.0, math.tau),
                 )
                 for _ in range(FOG_PARTICLE_COUNT)
             ]
@@ -453,7 +452,7 @@ class WorldMapScene:
             return
 
         fog_surface = pygame.Surface((NODE_DIAMETER, NODE_DIAMETER), pygame.SRCALPHA)
-        now = pygame.time.get_ticks() / 1000.0
+        now = self.time_source.now_ms() / 1000.0
         max_r_sq = (NODE_RADIUS - FOG_RADIUS_MARGIN) ** 2
 
         for particle in particles:
@@ -481,7 +480,7 @@ class WorldMapScene:
 
         surface.blit(fog_surface, fog_surface.get_rect(center=center))
 
-    def handle_event(self, e: pygame.event.Event) -> MapEvent:
+    def handle_event(self, e: pygame.event.Event) -> MapEvent | None:
 
         if e.type == pygame.KEYDOWN:
             if e.key in (pygame.K_LEFT, pygame.K_a):
@@ -495,10 +494,10 @@ class WorldMapScene:
             elif e.key == pygame.K_RETURN:
                 loc = self.locations[self.selected_idx]
                 if loc in self.unlocked:
-                    return ("start", loc)
+                    return MapEvent(MapAction.START, loc)
                 return None
             elif e.key == pygame.K_ESCAPE:
-                return ("back", None)
+                return MapEvent(MapAction.BACK)
 
         elif e.type == pygame.MOUSEMOTION:
             loc = self._loc_under_mouse(e.pos)
@@ -510,7 +509,7 @@ class WorldMapScene:
             if loc is not None:
                 self.selected_idx = self.locations.index(loc)
                 if loc in self.unlocked:
-                    return ("start", loc)
+                    return MapEvent(MapAction.START, loc)
 
         return None
 
@@ -605,7 +604,7 @@ class WorldMapScene:
         pos = self._current_mario_pos()
         if pos is None:
             return
-        now = pygame.time.get_ticks()
+        now = self.time_source.now_ms()
         frame_idx = (now // self._mario_frame_ms) % len(self.mario_frames)
         frame = self.mario_frames[frame_idx]
         bob = int(3 * math.sin(now / 260.0))

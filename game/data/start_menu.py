@@ -1,3 +1,15 @@
-MENU_ITEMS: list[str] = ["Почати гру", "Мапа світу", "Команди", "Вийти"]
+from game.actions import MenuAction, MenuItem
 
-__all__ = ["MENU_ITEMS"]
+MAIN_MENU_ITEMS: tuple[MenuItem, ...] = (
+    MenuItem("Почати гру", MenuAction.START_GAME),
+    MenuItem("Мапа світу", MenuAction.OPEN_MAP),
+    MenuItem("Команди", MenuAction.OPEN_CONTROLS),
+    MenuItem("Вийти", MenuAction.QUIT),
+)
+
+PAUSE_MENU_ITEMS: tuple[MenuItem, ...] = (
+    MenuItem("Продовжити гру", MenuAction.RESUME_GAME),
+    MenuItem("Мапа світу", MenuAction.OPEN_MAP),
+    MenuItem("Команди", MenuAction.OPEN_CONTROLS),
+    MenuItem("Вийти", MenuAction.QUIT),
+)

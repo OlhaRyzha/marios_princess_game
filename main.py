@@ -1,11 +1,8 @@
-import sys
-
 from game.app import run_game
 
 
-def main():
+def main() -> None:
     run_game()
-    sys.exit()
 
 
 if __name__ == "__main__":

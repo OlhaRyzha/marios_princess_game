@@ -3,7 +3,8 @@ from collections.abc import Sequence
 
 import pygame
 
-from game.data.start_menu import MENU_ITEMS
+from game.actions import MenuAction, MenuItem
+from game.data.start_menu import MAIN_MENU_ITEMS
 from game.utils.constants import BACKGROUNDS_DIR, FONT_SIZE, HEIGHT, WIDTH
 from game.utils.fonts import load_font
 
@@ -23,7 +24,7 @@ ColorValue = pygame.Color | ColorTuple
 def _load_image(path: str) -> pygame.Surface:
     try:
         img = pygame.image.load(path).convert_alpha()
-    except Exception as e:
+    except (FileNotFoundError, OSError, pygame.error) as e:
         print(f"[MENU] Не вдалося завантажити фон: {path} -> {e}")
         img = pygame.Surface((WIDTH, HEIGHT))
         img.fill((255, 200, 210))
@@ -54,20 +55,20 @@ class StartMenu:
         self.font_btn = load_font(int(FONT_SIZE * 1.4))
         self.font_hint = load_font(int(FONT_SIZE * 1.1))
 
-        self.items: list[str] = []
+        self.items: list[MenuItem] = []
         self.selected: int = 0
 
         self.btn_w: int = int(WIDTH * BTN_WIDTH_RATIO)
         self.btn_h: int = BTN_HEIGHT
         self.btn_gap: int = BTN_GAP
         self.btn_rects: list[pygame.Rect] = []
-        self.set_items(MENU_ITEMS)
+        self.set_items(MAIN_MENU_ITEMS)
 
         self.controls_open: bool = False
         self.controls_lines: list[str] = ["—"]
 
-    def set_items(self, items: Sequence[str]) -> None:
-        self.items = [str(it) for it in items]
+    def set_items(self, items: Sequence[MenuItem]) -> None:
+        self.items = list(items)
         self.btn_rects = self._build_button_rects()
 
     def set_controls(self, text: str | list[str]) -> None:
@@ -174,7 +175,7 @@ class StartMenu:
             ),
         )
 
-    def handle_event(self, e: pygame.event.Event) -> str | None:
+    def handle_event(self, e: pygame.event.Event) -> MenuAction | None:
         if self.controls_open:
             if e.type == pygame.KEYDOWN and e.key in (pygame.K_RETURN, pygame.K_ESCAPE):
                 self.controls_open = False
@@ -188,13 +189,9 @@ class StartMenu:
             elif e.key in (pygame.K_DOWN, pygame.K_s):
                 self.selected = (self.selected + 1) % len(self.items)
             elif e.key == pygame.K_RETURN:
-                choice = self.items[self.selected]
-                if choice == "Команди":
-                    self.open_controls()
-                    return None
-                return choice
+                return self.items[self.selected].action
             elif e.key == pygame.K_ESCAPE:
-                return "Вийти"
+                return MenuAction.QUIT
 
         elif e.type == pygame.MOUSEMOTION:
             mx, my = e.pos
@@ -208,11 +205,7 @@ class StartMenu:
             for i, r in enumerate(self.btn_rects):
                 if r.collidepoint(mx, my):
                     self.selected = i
-                    choice = self.items[i]
-                    if choice == "Команди":
-                        self.open_controls()
-                        return None
-                    return choice
+                    return self.items[i].action
 
         return None
 
@@ -225,8 +218,8 @@ class StartMenu:
 
         self._draw_title(surface)
 
-        for i, (label, rect) in enumerate(zip(self.items, self.btn_rects, strict=True)):
-            self._draw_button(surface, rect, label, selected=(i == self.selected))
+        for i, (item, rect) in enumerate(zip(self.items, self.btn_rects, strict=True)):
+            self._draw_button(surface, rect, item.label, selected=(i == self.selected))
 
         self._draw_hints(surface)
 

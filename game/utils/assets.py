@@ -1,5 +1,3 @@
-import os
-
 import pygame
 
 from game.utils.constants import SPRITES_DIR, TARGET_H
@@ -9,15 +7,17 @@ from game.utils.images import load_image, scale_to_height
 def load_sequence(
     folder: str, prefix: str, target_h: int | None = TARGET_H
 ) -> list[pygame.Surface]:
-    path = os.path.join(SPRITES_DIR, folder)
-    if not os.path.isdir(path):
+    path = SPRITES_DIR / folder
+    if not path.is_dir():
         return []
     names = sorted(
-        n for n in os.listdir(path) if n.startswith(prefix) and n.endswith(".png")
+        item.name
+        for item in path.iterdir()
+        if item.name.startswith(prefix) and item.suffix == ".png"
     )
     frames: list[pygame.Surface] = []
     for n in names:
-        img = load_image(os.path.join(path, n))
+        img = load_image(path / n)
         if target_h:
             img = scale_to_height(img, target_h)
         frames.append(img)

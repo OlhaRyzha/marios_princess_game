@@ -33,7 +33,7 @@ def _resolve_font_path() -> str | None:
             path = pygame.font.match_font(name)
             if path and os.path.exists(path):
                 return path
-    except Exception:
+    except (OSError, pygame.error):
         pass
     return None
 

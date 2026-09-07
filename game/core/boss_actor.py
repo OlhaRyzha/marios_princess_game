@@ -1,5 +1,8 @@
+from pathlib import Path
+
 import pygame
 
+from game.systems.time_source import TimeSource
 from game.utils.constants import (
     BOSS_HIT_COOLDOWN_MS,
     BOSS_JUMP_V,
@@ -14,8 +17,16 @@ from game.utils.images import load_image
 
 class BossActor(pygame.sprite.Sprite):
 
-    def __init__(self, *, name: str, image_path: str, x: int):
+    def __init__(
+        self,
+        *,
+        name: str,
+        image_path: str | Path,
+        x: int,
+        time_source: TimeSource,
+    ):
         super().__init__()
+        self.time_source = time_source
         self.name = name
         raw: pygame.Surface = load_image(image_path)
         w, h = raw.get_size()
@@ -37,13 +48,13 @@ class BossActor(pygame.sprite.Sprite):
         self._flash_ms_left = 0
 
     def can_take_damage(self) -> bool:
-        return (pygame.time.get_ticks() - self._last_hit_ms) >= BOSS_HIT_COOLDOWN_MS
+        return (self.time_source.now_ms() - self._last_hit_ms) >= BOSS_HIT_COOLDOWN_MS
 
     def take_damage(self, amount: int, *, knockback_dir: int = 0) -> bool:
         if not self.can_take_damage():
             return False
         self.health = max(0, self.health - amount)
-        self._last_hit_ms = pygame.time.get_ticks()
+        self._last_hit_ms = self.time_source.now_ms()
         self._flash_ms_left = 120
         self.vel.x += 2.2 * (1 if knockback_dir > 0 else -1)
         self.vel.y = max(self.vel.y, -2.0)
@@ -60,7 +71,7 @@ class BossActor(pygame.sprite.Sprite):
         self._jump_cd -= dt
         if self._jump_cd <= 0 and self.rect.bottom >= GROUND_Y - 0.5:
             self.vel.y = BOSS_JUMP_V
-            self._jump_cd = 0.9 + (pygame.time.get_ticks() % 400) / 400.0
+            self._jump_cd = 0.9 + (self.time_source.now_ms() % 400) / 400.0
 
     def _physics(self) -> None:
         self.vel.y += GRAVITY

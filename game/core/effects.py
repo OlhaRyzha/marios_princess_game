@@ -1,22 +1,26 @@
+import random
+
 import pygame
 
+from game.systems.time_source import TimeSource
 from game.utils.constants import CONFETTI_TIME_MS, HIT_SPARK_TIME_MS
 
 
 class HitSpark(pygame.sprite.Sprite):
-    def __init__(self, pos: tuple[int, int]):
+    def __init__(self, pos: tuple[int, int], *, time_source: TimeSource):
         super().__init__()
+        self.time_source = time_source
         self.pos = pygame.Vector2(pos)
-        self.start_ms = pygame.time.get_ticks()
+        self.start_ms = self.time_source.now_ms()
         self.image = pygame.Surface((1, 1), pygame.SRCALPHA)
         self.rect = self.image.get_rect(center=pos)
 
     def update(self, dt: float):
-        if pygame.time.get_ticks() - self.start_ms >= HIT_SPARK_TIME_MS:
+        if self.time_source.now_ms() - self.start_ms >= HIT_SPARK_TIME_MS:
             self.kill()
 
     def draw(self, surface: pygame.Surface, camera_x: float):
-        age = pygame.time.get_ticks() - self.start_ms
+        age = self.time_source.now_ms() - self.start_ms
         t = max(0.0, min(1.0, age / HIT_SPARK_TIME_MS))
         cx = int(self.pos.x - camera_x)
         cy = int(self.pos.y)
@@ -39,11 +43,17 @@ class HitSpark(pygame.sprite.Sprite):
 
 
 class ConfettiBurst(pygame.sprite.Sprite):
-
-    def __init__(self, rect: pygame.Rect):
+    def __init__(
+        self,
+        rect: pygame.Rect,
+        *,
+        time_source: TimeSource,
+        rng: random.Random,
+    ):
         super().__init__()
+        self.time_source = time_source
         self.rect = rect.copy()
-        self.start_ms = pygame.time.get_ticks()
+        self.start_ms = self.time_source.now_ms()
         self.particles = []
         colors = [
             (255, 95, 95),
@@ -52,19 +62,17 @@ class ConfettiBurst(pygame.sprite.Sprite):
             (90, 170, 255),
             (200, 120, 255),
         ]
-        import random
-
         for _ in range(80):
-            x = random.randint(self.rect.left + 40, self.rect.right - 40)
+            x = rng.randint(self.rect.left + 40, self.rect.right - 40)
             y = self.rect.top - 10
-            vx = random.uniform(-1.2, 1.2)
-            vy = random.uniform(0.2, 1.2)
-            size = random.randint(3, 6)
-            col = random.choice(colors)
+            vx = rng.uniform(-1.2, 1.2)
+            vy = rng.uniform(0.2, 1.2)
+            size = rng.randint(3, 6)
+            col = rng.choice(colors)
             self.particles.append([x, y, vx, vy, size, col])
 
     def update(self, dt: float):
-        if pygame.time.get_ticks() - self.start_ms >= CONFETTI_TIME_MS:
+        if self.time_source.now_ms() - self.start_ms >= CONFETTI_TIME_MS:
             self.kill()
             return
 

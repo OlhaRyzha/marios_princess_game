@@ -1,3 +1,4 @@
+import random
 from collections.abc import Callable
 from typing import cast
 
@@ -7,15 +8,18 @@ from pygame.sprite import Group
 from game.core.background import ParallaxBackground
 from game.core.boss_actor import BossActor
 from game.core.collectible import Collectible
-from game.core.collision import MaskedSprite, collide_mask
+from game.core.collision import CollisionSprite, collide_mask
 from game.core.combat import CombatSystem
 from game.core.effects import ConfettiBurst, HitSpark
 from game.core.finale import FinaleCinematic
 from game.core.obstacle_factory import boss_gate_position, build_obstacles
 from game.core.player import Princess
-from game.data.bosses import BOSS_ROSTER
+from game.data.bosses import BOSS_ROSTER, BossConfig
 from game.data.collectibles import COLLECTIBLE_SETS
 from game.data.locations import NEXT_LOCATION, LocationName
+from game.services.audio import AudioService
+from game.systems.input_state import InputSource
+from game.systems.time_source import TimeSource
 from game.ui.boss_preview import BossPreview
 from game.ui.hud import HealthHUD
 from game.ui.ui_modal import VictoryModal
@@ -29,12 +33,12 @@ from game.utils.constants import (
     MUSIC_BOSS,
     MUSIC_LEVEL,
     MUSIC_VICTORY,
-    MUSIC_VOLUME,
     OBSTACLE_SCALE,
     WIDTH,
 )
 from game.utils.fonts import load_font
 from game.utils.images import scale_to_height
+from game.utils.paths import resolve_project_path
 
 
 class DemoScene:
@@ -43,13 +47,23 @@ class DemoScene:
         screen: pygame.Surface,
         location: LocationName = "sunny_meadows",
         *,
+        time_source: TimeSource,
+        input_source: InputSource,
+        rng: random.Random,
+        audio_service: AudioService,
         on_location_completed: Callable[[LocationName], None] | None = None,
     ):
         self.screen = screen
+        self.time_source = time_source
+        self.input_source = input_source
+        self.rng = rng
+        self.audio_service = audio_service
         self.bg = ParallaxBackground(location)
 
         self.START_X = 240
-        self.player: Princess = Princess((self.START_X, GROUND_Y))
+        self.player: Princess = Princess(
+            (self.START_X, GROUND_Y), time_source=self.time_source
+        )
 
         self.all_sprites: Group = Group()
         self.obstacles: Group = Group()
@@ -64,6 +78,7 @@ class DemoScene:
             self.boss_group,
             self.projectiles,
             self.fx_group,
+            time_source=self.time_source,
             on_boss_defeated=self._on_boss_victory,
         )
 
@@ -77,7 +92,7 @@ class DemoScene:
         self.hud = HealthHUD()
 
         self.mode = "explore"
-        self.current_boss: dict | None = None
+        self.current_boss: BossConfig | None = None
         self._completion_reported = False
         self._on_location_completed = on_location_completed
         self.boss_preview = BossPreview(self.font, on_select=self._on_boss_selected)
@@ -97,13 +112,8 @@ class DemoScene:
 
         self._load_obstacles(location)
 
-        if not pygame.mixer.get_init():
-            try:
-                pygame.mixer.init()
-            except Exception:
-                pass
-        self._stop_music()
-        self._play_music(MUSIC_LEVEL, loop=True)
+        self.audio_service.stop_music()
+        self.audio_service.play_music(MUSIC_LEVEL, loop=True)
 
     def _load_obstacles(self, location: LocationName):
 
@@ -116,6 +126,7 @@ class DemoScene:
             location=location,
             start_x=self.START_X,
             scale=OBSTACLE_SCALE,
+            rng=self.rng,
         )
         if new_obstacles:
             self.obstacles.add(*new_obstacles)
@@ -146,15 +157,17 @@ class DemoScene:
         icon_surface: pygame.Surface | None = None
         if setup.image_path:
             try:
-                raw = pygame.image.load(setup.image_path).convert_alpha()
+                raw = pygame.image.load(
+                    resolve_project_path(setup.image_path)
+                ).convert_alpha()
                 world_surface = scale_to_height(raw, setup.world_height)
                 icon_surface = scale_to_height(raw, setup.icon_height)
-            except Exception:
+            except (FileNotFoundError, OSError, pygame.error):
                 world_surface = None
                 icon_surface = None
 
         for pos in setup.positions:
-            item = Collectible(setup.kind, pos, surface=world_surface)
+            item = Collectible(setup.kind, pos, rng=self.rng, surface=world_surface)
             self.collectibles.add(item)
 
         self.collectible_goal = len(setup.positions)
@@ -187,24 +200,10 @@ class DemoScene:
             0.0, min(self.player.pos.x - WIDTH * 0.5, LEVEL_WIDTH - WIDTH)
         )
 
-    def _play_music(self, path: str, *, loop: bool = True):
-        try:
-            pygame.mixer.music.load(path)
-            pygame.mixer.music.set_volume(MUSIC_VOLUME)
-            pygame.mixer.music.play(-1 if loop else 0)
-        except Exception:
-            pass
-
-    def _stop_music(self):
-        try:
-            pygame.mixer.music.stop()
-        except Exception:
-            pass
-
     def _sync_player_rect(self) -> None:
         self.player.rect.midbottom = (int(self.player.pos.x), int(self.player.pos.y))
 
-    def _on_boss_selected(self, boss: dict):
+    def _on_boss_selected(self, boss: BossConfig) -> None:
         self.current_boss = boss
         self._start_boss_fight(boss)
 
@@ -215,9 +214,15 @@ class DemoScene:
 
         self.boss_group.empty()
         self.projectiles.empty()
-        self._stop_music()
-        self._play_music(MUSIC_VICTORY, loop=False)
-        self.fx_group.add(ConfettiBurst(self.screen.get_rect()))
+        self.audio_service.stop_music()
+        self.audio_service.play_music(MUSIC_VICTORY, loop=False)
+        self.fx_group.add(
+            ConfettiBurst(
+                self.screen.get_rect(),
+                time_source=self.time_source,
+                rng=self.rng,
+            )
+        )
 
         nxt = NEXT_LOCATION.get(self.location)
         if nxt:
@@ -238,7 +243,7 @@ class DemoScene:
             self.mode = "victory"
         else:
             self.finale.ensure_assets()
-            self.finale.start(pygame.time.get_ticks())
+            self.finale.start(self.time_source.now_ms())
             self._pending_final_modal = (
                 "You win!",
                 [
@@ -249,10 +254,10 @@ class DemoScene:
             )
             self.mode = "finale"
 
-    def _start_boss_fight(self, boss: dict):
+    def _start_boss_fight(self, boss: BossConfig) -> None:
         self.mode = "boss"
-        self._stop_music()
-        self._play_music(MUSIC_BOSS, loop=True)
+        self.audio_service.stop_music()
+        self.audio_service.play_music(MUSIC_BOSS, loop=True)
 
         view_left = self.camera_x
         view_right = self.camera_x + WIDTH
@@ -264,7 +269,12 @@ class DemoScene:
         self._sync_player_rect()
 
         pre_x = max(120, min(view_right - 140, LEVEL_WIDTH - 120))
-        boss_actor = BossActor(name=boss["name"], image_path=boss["img"], x=int(pre_x))
+        boss_actor = BossActor(
+            name=boss.name,
+            image_path=boss.image_path,
+            x=int(pre_x),
+            time_source=self.time_source,
+        )
 
         desired_right = view_right - 120
         boss_actor.rect.right = int(desired_right)
@@ -301,7 +311,7 @@ class DemoScene:
             obstacle
             for obstacle in self.obstacles
             if collide_mask(
-                cast(MaskedSprite, self.player), cast(MaskedSprite, obstacle)
+                cast(CollisionSprite, self.player), cast(CollisionSprite, obstacle)
             )
         ]
         if hits and self.player.can_take_damage():
@@ -315,7 +325,9 @@ class DemoScene:
         hits = pygame.sprite.spritecollide(self.player, self.collectibles, dokill=True)
         if hits:
             for item in hits:
-                self.fx_group.add(HitSpark(item.rect.center))
+                self.fx_group.add(
+                    HitSpark(item.rect.center, time_source=self.time_source)
+                )
             self.collectibles_collected += len(hits)
             if self.collectibles_collected > self.collectible_goal:
                 self.collectibles_collected = self.collectible_goal
@@ -335,7 +347,7 @@ class DemoScene:
                 )
                 self._collectible_hint_timer = 2.6
                 return
-            bosses = BOSS_ROSTER.get(self.location, [])
+            bosses = BOSS_ROSTER[self.location]
             if bosses:
                 self.boss_preview.open(bosses)
             self._boss_intro_shown = True
@@ -361,12 +373,12 @@ class DemoScene:
         self._collectible_hint_timer = 0.0
         self._collectible_hint_text = ""
         self.finale.reset()
-        self._stop_music()
-        self._play_music(MUSIC_LEVEL, loop=True)
+        self.audio_service.stop_music()
+        self.audio_service.play_music(MUSIC_LEVEL, loop=True)
 
     def update(self, dt: float):
-        keys = pygame.key.get_pressed()
-        self.all_sprites.update(dt, keys)
+        input_state = self.input_source.read()
+        self.all_sprites.update(dt, input_state)
         self.collectibles.update(dt)
 
         self.combat.update(dt)
@@ -381,7 +393,7 @@ class DemoScene:
         elif self.mode == "boss":
             self.combat.update_boss_phase()
         elif self.mode == "finale":
-            now = pygame.time.get_ticks()
+            now = self.time_source.now_ms()
             if self.finale.ready_for_modal(now):
                 if self._pending_final_modal and self.victory_modal is None:
                     title, lines = self._pending_final_modal
@@ -392,11 +404,7 @@ class DemoScene:
                             pygame.event.Event(pygame.QUIT)
                         ),
                     )
-                    if hasattr(modal, "footer_text"):
-                        try:
-                            modal.footer_text = "Натисни Enter, щоб завершити гру"
-                        except Exception:
-                            pass
+                    modal.footer_text = "Натисни Enter, щоб завершити гру"
                     self.victory_modal = modal
                     self._pending_final_modal = None
                 self.finale.reset()

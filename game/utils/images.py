@@ -1,11 +1,20 @@
+import logging
+from pathlib import Path
+
 import pygame
 
+from game.utils.paths import resolve_project_path
 
-def load_image(path: str, *, convert_alpha: bool = True) -> pygame.Surface:
+logger = logging.getLogger(__name__)
+
+
+def load_image(path: str | Path, *, convert_alpha: bool = True) -> pygame.Surface:
+    resolved_path = resolve_project_path(path)
     try:
-        img = pygame.image.load(path)
+        img = pygame.image.load(resolved_path)
         return img.convert_alpha() if convert_alpha else img.convert()
-    except Exception:
+    except (FileNotFoundError, OSError, pygame.error) as error:
+        logger.warning("Could not load image %s: %s", resolved_path, error)
         surf = pygame.Surface((64, 64), pygame.SRCALPHA)
         surf.fill((200, 100, 200, 255))
         pygame.draw.rect(surf, (30, 30, 30, 255), surf.get_rect(), 2)

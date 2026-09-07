@@ -1,241 +1,102 @@
 import asyncio
+import random
 import sys
 from collections.abc import Mapping
-from typing import TypedDict, cast
+from pathlib import Path
+from typing import cast
 
 import pygame
 
+from game.controller import ControllerEffect, GameController
 from game.core.demo_scene import DemoScene
 from game.data.bosses import BOSS_ROSTER
-from game.data.locations import LOCATION_ORDER, LocationName
+from game.data.locations import LocationName
 from game.data.objectives import CONTROLS, OBJECTIVES
-from game.data.start_menu import MENU_ITEMS
+from game.data.start_menu import MAIN_MENU_ITEMS, PAUSE_MENU_ITEMS
+from game.frame_renderer import FrameRenderer
+from game.input_adapter import InputAdapter
+from game.scene_factory import SceneFactory
+from game.services.audio import PygameAudioService
+from game.state import GameMode, GameState
+from game.systems.input_state import PygameInputSource
+from game.systems.time_source import PygameTimeSource
 from game.ui.start_menu import StartMenu
 from game.ui.world_map import WorldMapScene
 from game.utils.constants import FPS, HEIGHT, TITLE, WIDTH
 
 
-class GameState(TypedDict):
-    running: bool
-    mode: str
-    scene: DemoScene | None
-    pending_location: LocationName
-    progress_unlocked: set[LocationName]
-    progress_completed: set[LocationName]
-    audio_armed: bool
-    time_accumulator: float
-
-
-def _build_boss_thumbs() -> dict[str, str | None]:
-    thumbs: dict[str, str | None] = {}
+def _build_boss_thumbs() -> dict[str, Path | None]:
+    thumbs: dict[str, Path | None] = {}
     for loc, lst in BOSS_ROSTER.items():
-        thumbs[loc] = lst[0].get("img") if lst else None
+        thumbs[loc] = lst[0].image_path if lst else None
     return thumbs
-
-
-def _build_state(
-    *,
-    pending_location: LocationName,
-    progress_unlocked: set[LocationName],
-    progress_completed: set[LocationName],
-    mode: str = "menu",
-) -> GameState:
-    return {
-        "running": True,
-        "mode": mode,
-        "scene": None,
-        "pending_location": pending_location,
-        "progress_unlocked": progress_unlocked,
-        "progress_completed": progress_completed,
-        "audio_armed": False,
-        "time_accumulator": 0.0,
-    }
 
 
 def run_frame(
     *,
-    screen: pygame.Surface,
     clock: pygame.time.Clock,
     dt_scale: float,
     menu: StartMenu,
     world_map: WorldMapScene,
-    state: GameState,
-    is_web: bool,
+    controller: GameController[DemoScene],
+    input_adapter: InputAdapter[DemoScene],
+    scene_factory: SceneFactory,
+    renderer: FrameRenderer[DemoScene],
 ) -> None:
-    progress_unlocked: set[LocationName] = state["progress_unlocked"]
-    progress_completed: set[LocationName] = state["progress_completed"]
-    mode: str = state["mode"]
-    scene: DemoScene | None = state["scene"]
-    pending_location: LocationName = state["pending_location"]
+    state = controller.state
 
     def update_world_map_progress() -> None:
-        world_map.set_progress(unlocked=progress_unlocked, completed=progress_completed)
+        world_map.set_progress(
+            unlocked=state.progress.unlocked,
+            completed=state.progress.completed,
+        )
 
     def handle_location_completed(loc: LocationName) -> None:
-        nonlocal pending_location
-        if loc not in progress_completed:
-            progress_completed.add(loc)
-            try:
-                idx = LOCATION_ORDER.index(loc)
-            except ValueError:
-                idx = -1
-            if idx != -1 and idx + 1 < len(LOCATION_ORDER):
-                next_loc = LOCATION_ORDER[idx + 1]
-                progress_unlocked.add(next_loc)
-                pending_location = next_loc
+        controller.complete_location(loc)
         update_world_map_progress()
+
+    def start_scene() -> None:
+        state.scene = scene_factory.create_game_scene(
+            state.progress.pending_location,
+            on_location_completed=handle_location_completed,
+        )
+
+    def apply_effect(effect: ControllerEffect | None) -> None:
+        if effect is ControllerEffect.START_SCENE:
+            start_scene()
+        elif effect is ControllerEffect.OPEN_CONTROLS:
+            menu.open_controls()
+
+    def sync_menu_items() -> None:
+        if state.mode is GameMode.MENU:
+            menu.set_items(MAIN_MENU_ITEMS)
+        elif state.mode is GameMode.MENU_PAUSE:
+            menu.set_items(PAUSE_MENU_ITEMS)
 
     dt = clock.tick(FPS) / dt_scale
     dt = min(dt, 0.1)
+    sync_menu_items()
 
     for e in pygame.event.get():
-        if e.type == pygame.QUIT:
-            state["running"] = False
+        apply_effect(input_adapter.route(e))
 
-        if is_web and (e.type in (pygame.KEYDOWN, pygame.MOUSEBUTTONDOWN)):
-            if not state["audio_armed"]:
-                try:
-                    pygame.mixer.init()
-                except Exception:
-                    pass
-                state["audio_armed"] = True
+    sync_menu_items()
 
-        if e.type == pygame.KEYDOWN:
-            if e.key == pygame.K_m and scene is not None:
-                if mode == "game":
-                    mode = "map_overlay"
-                    state["mode"] = mode
-                    continue
-                elif mode == "map_overlay":
-                    mode = "game"
-                    state["mode"] = mode
-                    continue
-
-            if e.key == pygame.K_ESCAPE:
-                if mode == "game":
-                    mode = "menu_pause"
-                    state["mode"] = mode
-                    continue
-                elif mode == "menu_pause":
-                    mode = "game"
-                    state["mode"] = mode
-                    continue
-                elif mode == "map":
-                    mode = "menu"
-                    state["mode"] = mode
-                    continue
-                elif mode == "map_overlay":
-                    mode = "game"
-                    state["mode"] = mode
-                    continue
-
-        if mode == "menu":
-            menu.set_items(MENU_ITEMS)
-            action = menu.handle_event(e)
-            if action == "Почати гру":
-                scene = DemoScene(
-                    screen,
-                    location=pending_location,
-                    on_location_completed=handle_location_completed,
-                )
-                mode = "game"
-            elif action == "Мапа світу":
-                mode = "map"
-            elif action == "Команди":
-                menu.open_controls()
-            elif action == "Вийти":
-                state["running"] = False
-
-        elif mode == "map":
-            res = world_map.handle_event(e)
-            if res:
-                kind, payload = res
-                if kind == "start" and payload:
-                    pending_location = cast(LocationName, payload)
-                    scene = DemoScene(
-                        screen,
-                        location=pending_location,
-                        on_location_completed=handle_location_completed,
-                    )
-                    mode = "game"
-                elif kind == "back":
-                    mode = "menu"
-
-        elif mode == "map_overlay":
-            res = world_map.handle_event(e)
-            if res:
-                kind, payload = res
-                if kind == "start" and payload:
-                    pending_location = cast(LocationName, payload)
-                    scene = DemoScene(
-                        screen,
-                        location=pending_location,
-                        on_location_completed=handle_location_completed,
-                    )
-                    mode = "game"
-                elif kind == "back":
-                    mode = "game"
-
-        elif mode == "menu_pause":
-            menu.set_items(MENU_ITEMS)
-            action = menu.handle_event(e)
-            if action == "Продовжити гру":
-                mode = "game"
-            elif action == "Мапа світу":
-                mode = "map_overlay"
-            elif action == "Команди":
-                menu.open_controls()
-            elif action == "Вийти":
-                state["running"] = False
-
-        elif mode == "game":
-            if scene is not None:
-                scene.handle_event(e)
-
-        state["scene"] = scene
-        state["mode"] = mode
-        state["pending_location"] = pending_location
-
-    if mode == "menu":
-        state["time_accumulator"] = 0.0
-        menu.draw(screen)
-
-    elif mode == "map":
-        state["time_accumulator"] = 0.0
-        world_map.draw(screen, overlay=False)
-
-    elif mode == "game":
-        if scene is not None:
+    if state.mode is GameMode.GAME:
+        if state.scene is not None:
             fixed_step = 1.0 / FPS
-            accumulator = state["time_accumulator"] + dt
+            accumulator = state.time_accumulator + dt
             while accumulator >= fixed_step:
-                scene.update(fixed_step)
+                state.scene.update(fixed_step)
                 accumulator -= fixed_step
-            state["time_accumulator"] = accumulator
-            scene.draw()
-            state["pending_location"] = scene.location
+            state.time_accumulator = accumulator
+            state.progress.pending_location = state.scene.location
         else:
-            state["time_accumulator"] = 0.0
+            state.time_accumulator = 0.0
+    else:
+        state.time_accumulator = 0.0
 
-    elif mode == "map_overlay":
-        state["time_accumulator"] = 0.0
-        if scene is not None:
-            scene.update(0.0)
-            scene.draw()
-            state["pending_location"] = scene.location
-        world_map.draw(screen, overlay=True)
-
-    elif mode == "menu_pause":
-        state["time_accumulator"] = 0.0
-        if scene is not None:
-            scene.update(0.0)
-            scene.draw()
-        dim = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
-        dim.fill((0, 0, 0, 110))
-        screen.blit(dim, (0, 0))
-        menu.draw(screen)
-
-    pygame.display.flip()
+    renderer.draw(state)
 
 
 class GameRuntime:
@@ -245,10 +106,20 @@ class GameRuntime:
         self.screen = pygame.display.set_mode((WIDTH, HEIGHT))
         pygame.display.set_caption(TITLE)
         self.clock = pygame.time.Clock()
+        self.time_source = PygameTimeSource()
+        self.input_source = PygameInputSource()
+        self.rng = random.Random()
+        self.audio_service = PygameAudioService()
+        self.scene_factory = SceneFactory(
+            screen=self.screen,
+            time_source=self.time_source,
+            input_source=self.input_source,
+            rng=self.rng,
+            audio_service=self.audio_service,
+        )
 
-        self.progress_completed: set[LocationName] = set()
-        self.progress_unlocked: set[LocationName] = {LOCATION_ORDER[0]}
-        self.pending_location: LocationName = LOCATION_ORDER[0]
+        self.state = GameState[DemoScene]()
+        self.controller = GameController(self.state)
 
         self.menu = StartMenu()
         self.menu.set_controls(CONTROLS)
@@ -256,44 +127,55 @@ class GameRuntime:
         self.world_map = WorldMapScene(
             objectives=mapped_objectives,
             boss_thumbs=_build_boss_thumbs(),
-            unlocked=self.progress_unlocked,
-            completed=self.progress_completed,
-        )
-
-        self.state: GameState = _build_state(
-            pending_location=self.pending_location,
-            progress_unlocked=self.progress_unlocked,
-            progress_completed=self.progress_completed,
-            mode="menu",
+            unlocked=self.state.progress.unlocked,
+            completed=self.state.progress.completed,
+            time_source=self.time_source,
+            rng=self.rng,
         )
 
         self.world_map.set_progress(
-            unlocked=self.progress_unlocked, completed=self.progress_completed
+            unlocked=self.state.progress.unlocked,
+            completed=self.state.progress.completed,
+        )
+        self.input_adapter = InputAdapter(
+            controller=self.controller,
+            menu=self.menu,
+            world_map=self.world_map,
+            audio_service=self.audio_service,
+            input_source=self.input_source,
+            is_web=self.is_web,
+        )
+        self.renderer = FrameRenderer(
+            screen=self.screen,
+            menu=self.menu,
+            world_map=self.world_map,
         )
 
     def tick(self) -> None:
         run_frame(
-            screen=self.screen,
             clock=self.clock,
             dt_scale=1000.0,
             menu=self.menu,
             world_map=self.world_map,
-            state=self.state,
-            is_web=self.is_web,
+            controller=self.controller,
+            input_adapter=self.input_adapter,
+            scene_factory=self.scene_factory,
+            renderer=self.renderer,
         )
 
     def run(self) -> None:
-        while self.state["running"]:
+        while self.state.running:
             self.tick()
         self._shutdown()
 
     async def run_async(self) -> None:
-        while self.state["running"]:
+        while self.state.running:
             self.tick()
             await asyncio.sleep(0)
         self._shutdown()
 
     def _shutdown(self) -> None:
+        self.audio_service.stop_music()
         pygame.quit()
 
 

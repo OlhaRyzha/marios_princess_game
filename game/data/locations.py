@@ -39,13 +39,3 @@ NEXT_LOCATION: dict[LocationName, LocationName | None] = {
     "mushroom_woods": "crystal_caves",
     "crystal_caves": None,
 }
-
-__all__ = [
-    "LocationName",
-    "LOCATION_ORDER",
-    "crawl_gap",
-    "MEADOWS_PATTERN",
-    "WOODS_PATTERN",
-    "CAVES_PATTERN",
-    "NEXT_LOCATION",
-]

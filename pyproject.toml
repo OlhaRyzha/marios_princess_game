@@ -12,7 +12,9 @@ dependencies = [
 dev = [
     "black>=25.9.0",
     "pre-commit>=4.3.0",
+    "pygbag>=0.9.2,<1",
     "pytest>=8.4.0",
+    "pytest-cov>=7.1.0",
     "ruff>=0.14.1",
 ]
 
@@ -35,6 +37,15 @@ extend-exclude = '''
 addopts = "-ra"
 pythonpath = ["."]
 testpaths = ["tests"]
+
+[tool.coverage.run]
+branch = true
+source = ["game"]
+
+[tool.coverage.report]
+fail_under = 60
+show_missing = true
+skip_covered = true
 
 [tool.ruff]
 line-length = 88

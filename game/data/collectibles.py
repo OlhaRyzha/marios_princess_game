@@ -53,5 +53,3 @@ COLLECTIBLE_SETS: dict[LocationName, CollectibleSet] = {
         hint="Збери всі сніжинки, щоб матеріалізувати боса!",
     ),
 }
-
-__all__ = ["CollectibleSet", "COLLECTIBLE_SETS"]

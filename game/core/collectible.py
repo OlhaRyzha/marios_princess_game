@@ -80,13 +80,14 @@ class Collectible(pygame.sprite.Sprite):
         kind: str,
         pos: tuple[int, int],
         *,
+        rng: random.Random,
         size: int = 46,
         surface: pygame.Surface | None = None,
     ):
         super().__init__()
         self.kind = kind
         self._base_y = float(pos[1])
-        self._phase = random.uniform(0.0, math.tau)
+        self._phase = rng.uniform(0.0, math.tau)
         self._bob_range = 6.0
         self._bob_speed = 2.4
         if surface is not None:

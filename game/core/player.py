@@ -1,6 +1,8 @@
 import pygame
 
 from game.systems.animation import Animation
+from game.systems.input_state import InputState
+from game.systems.time_source import TimeSource
 from game.utils.assets import load_sequence
 from game.utils.constants import (
     AIR_ACCEL,
@@ -24,9 +26,13 @@ from game.utils.constants import (
 
 class Princess(pygame.sprite.Sprite):
     def __init__(
-        self, pos: tuple[int, int], *groups: pygame.sprite.AbstractGroup
+        self,
+        pos: tuple[int, int],
+        *groups: pygame.sprite.AbstractGroup,
+        time_source: TimeSource,
     ) -> None:
         super().__init__(*groups)
+        self.time_source = time_source
 
         self.anims: dict[str, Animation] = {
             "idle": Animation(
@@ -112,13 +118,13 @@ class Princess(pygame.sprite.Sprite):
         return Animation(out, fps=8, loop=True)
 
     def can_take_damage(self) -> bool:
-        return (pygame.time.get_ticks() - self._last_hit_ms) >= DAMAGE_COOLDOWN_MS
+        return (self.time_source.now_ms() - self._last_hit_ms) >= DAMAGE_COOLDOWN_MS
 
     def take_damage(self, amount: int = 1):
         if not self.can_take_damage():
             return
         self.health = max(0, self.health - amount)
-        self._last_hit_ms = pygame.time.get_ticks()
+        self._last_hit_ms = self.time_source.now_ms()
         self.set_state("hurt", timer=0.35)
 
     def set_state(self, s: str, timer: float = 0.0):
@@ -132,24 +138,24 @@ class Princess(pygame.sprite.Sprite):
     def _remember_dir(self, d: int):
         if d != 0:
             self._last_dir_input = 1 if d > 0 else -1
-            self._last_dir_time_ms = pygame.time.get_ticks()
+            self._last_dir_time_ms = self.time_source.now_ms()
 
     def _dir_from_buffer(self) -> int:
-        if pygame.time.get_ticks() - self._last_dir_time_ms <= DIR_BUFFER_MS:
+        if self.time_source.now_ms() - self._last_dir_time_ms <= DIR_BUFFER_MS:
             return self._last_dir_input
         return 0
 
-    def _handle_input(self, keys: pygame.key.ScancodeWrapper):
+    def _handle_input(self, input_state: InputState) -> None:
         moving = False
-        running = keys[pygame.K_LSHIFT] or keys[pygame.K_RSHIFT]
+        running = input_state.run
         speed = SPEED_RUN if running else SPEED_WALK
 
-        self.crouched = bool(keys[pygame.K_DOWN] or keys[pygame.K_s])
+        self.crouched = input_state.down
         if self.crouched:
             speed = speed * CRAWL_SPEED
 
-        left = keys[pygame.K_LEFT] or keys[pygame.K_a]
-        right = keys[pygame.K_RIGHT] or keys[pygame.K_d]
+        left = input_state.left
+        right = input_state.right
 
         if left:
             self.vel.x = -speed if self.on_ground else self.vel.x
@@ -165,17 +171,16 @@ class Princess(pygame.sprite.Sprite):
             if self.on_ground:
                 self.vel.x = 0
 
-        if keys[pygame.K_j]:
+        if input_state.attack:
             self.set_state("attack", timer=0.35)
-        elif keys[pygame.K_k]:
+        elif input_state.celebrate:
             self.set_state("celebrate", timer=0.8)
-        elif keys[pygame.K_h]:
+        elif input_state.hurt:
             self.set_state("hurt", timer=0.5)
-        elif keys[pygame.K_f]:
+        elif input_state.cry:
             self.set_state("cry", timer=0.5)
 
-        jump_pressed = keys[pygame.K_SPACE] or keys[pygame.K_w] or keys[pygame.K_UP]
-        if jump_pressed and self.on_ground and not self.crouched:
+        if input_state.jump and self.on_ground and not self.crouched:
             self.vel.y = JUMP_V
             if not (left or right):
                 self.vel.x = 0
@@ -229,7 +234,7 @@ class Princess(pygame.sprite.Sprite):
         self.rect = self.image.get_rect(midbottom=(self.pos.x, self.pos.y))
         self.mask = pygame.mask.from_surface(self.image)
 
-    def update(self, dt: float, keys: pygame.key.ScancodeWrapper):
+    def update(self, dt: float, input_state: InputState) -> None:
         if (
             self.state in ("attack", "hurt", "cry", "celebrate")
             and self.state_timer > 0
@@ -242,7 +247,7 @@ class Princess(pygame.sprite.Sprite):
                     self.set_state("fall")
 
         if self.state not in ("attack", "hurt", "cry", "celebrate"):
-            self._handle_input(keys)
+            self._handle_input(input_state)
 
         self._physics()
 
