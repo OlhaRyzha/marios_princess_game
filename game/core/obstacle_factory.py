@@ -1,23 +1,23 @@
-from __future__ import annotations
-
 import math
 import random
-from typing import Tuple, cast
+from typing import cast
 
 import pygame
 
 from game.core.obstacle import Anchor, Obstacle
-from game.data import (
+from game.data.blocks import (
     CAVES_BLOCKS,
-    CAVES_PATTERN,
-    LocationName,
     MEADOWS_BLOCKS,
-    MEADOWS_PATTERN,
     WOODS_BLOCKS,
+)
+from game.data.locations import (
+    CAVES_PATTERN,
+    MEADOWS_PATTERN,
     WOODS_PATTERN,
+    LocationName,
     crawl_gap,
 )
-from game.utils import LEVEL_WIDTH, OBSTACLE_SCALE
+from game.utils.constants import LEVEL_WIDTH, OBSTACLE_SCALE
 
 
 class MovingObstacle(Obstacle):
@@ -82,7 +82,7 @@ class MovingObstacle(Obstacle):
             self.rect.x = int(x)
 
 
-def _rand_from_range(value: object, *, default: float) -> float:
+def _rand_from_range(value: object, *, default: float, rng: random.Random) -> float:
     if value is None:
         return float(default)
     if isinstance(value, (int, float)):
@@ -94,7 +94,7 @@ def _rand_from_range(value: object, *, default: float) -> float:
         if lo_f == hi_f:
             return lo_f
         low, high = (lo_f, hi_f) if lo_f < hi_f else (hi_f, lo_f)
-        return random.uniform(low, high)
+        return rng.uniform(low, high)
     return float(default)
 
 
@@ -133,7 +133,8 @@ def build_obstacles(
     safe_gap: int = 520,
     step_x: int = 320,
     scale: float = OBSTACLE_SCALE,
-) -> Tuple[list[Obstacle], int]:
+    rng: random.Random,
+) -> tuple[list[Obstacle], int]:
 
     obstacles: list[Obstacle] = []
     blocks, pattern = _blocks_for_location(location)
@@ -161,16 +162,16 @@ def build_obstacles(
                 origin = str(moving_cfg.get("origin", "center"))
                 travel_default = 190.0 if origin in ("bottom", "top") else 90.0
                 travel_value = _rand_from_range(
-                    moving_cfg.get("travel"), default=travel_default
+                    moving_cfg.get("travel"), default=travel_default, rng=rng
                 )
                 amplitude = (
                     travel_value
                     if origin in ("bottom", "top")
                     else _rand_from_range(
-                        moving_cfg.get("amplitude"), default=travel_value
+                        moving_cfg.get("amplitude"), default=travel_value, rng=rng
                     )
                 )
-                speed = _rand_from_range(moving_cfg.get("speed"), default=1.0)
+                speed = _rand_from_range(moving_cfg.get("speed"), default=1.0, rng=rng)
                 phase_cfg = moving_cfg.get("phase") if "phase" in moving_cfg else None
                 if phase_cfg is None:
                     if origin == "bottom":
@@ -178,11 +179,11 @@ def build_obstacles(
                     elif origin == "top":
                         phase = math.pi * 0.5
                     else:
-                        phase = random.uniform(
+                        phase = rng.uniform(
                             0.0, math.tau if hasattr(math, "tau") else 2.0 * math.pi
                         )
                 else:
-                    phase = _rand_from_range(phase_cfg, default=0.0)
+                    phase = _rand_from_range(phase_cfg, default=0.0, rng=rng)
 
                 obstacle = cast(
                     Obstacle,
@@ -217,11 +218,3 @@ def build_obstacles(
 
 def boss_gate_position(max_right: int, *, margin: int = 140) -> int:
     return min(max_right + margin, LEVEL_WIDTH - 100)
-
-
-__all__ = [
-    "MovingObstacle",
-    "MOVING_BLOCK_BEHAVIOUR",
-    "build_obstacles",
-    "boss_gate_position",
-]

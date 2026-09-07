@@ -1,11 +1,9 @@
-from __future__ import annotations
-
-import os
 from typing import Literal
 
 import pygame
 
-from game.utils import GROUND_Y
+from game.utils.constants import GROUND_Y
+from game.utils.paths import resolve_project_path
 
 Anchor = Literal["ground", "air"]
 
@@ -14,17 +12,19 @@ def _to_surface(src: str) -> pygame.Surface:
     if isinstance(src, pygame.Surface):
         return src
     if isinstance(src, str):
-        if not os.path.exists(src):
-            raise FileNotFoundError(f"Obstacle image not found: {src}")
-        return pygame.image.load(src).convert_alpha()
+        path = resolve_project_path(src)
+        if not path.is_file():
+            raise FileNotFoundError(f"Obstacle image not found: {path}")
+        return pygame.image.load(path).convert_alpha()
     if isinstance(src, dict):
         img = src.get("image") or src.get("path") or src.get("image_path")
         if isinstance(img, pygame.Surface):
             return img
         if isinstance(img, str):
-            if not os.path.exists(img):
-                raise FileNotFoundError(f"Obstacle image not found: {img}")
-            return pygame.image.load(img).convert_alpha()
+            path = resolve_project_path(img)
+            if not path.is_file():
+                raise FileNotFoundError(f"Obstacle image not found: {path}")
+            return pygame.image.load(path).convert_alpha()
         size = src.get("size")
         if size:
             surf = pygame.Surface(size, pygame.SRCALPHA)

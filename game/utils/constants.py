@@ -1,7 +1,4 @@
-from __future__ import annotations
-
 from pathlib import Path
-
 
 WIDTH, HEIGHT = 1280, 720
 FPS = 60
@@ -27,11 +24,11 @@ HELP_TEXT = "←/→ move, space — jump, ↓ — crouch, j — attack"
 
 
 BASE_DIR = Path(__file__).resolve().parents[2]
-ASSETS_DIR = str(BASE_DIR / "assets")
-SPRITES_DIR = f"{ASSETS_DIR}/princess"
-BACKGROUNDS_DIR = f"{ASSETS_DIR}/backgrounds"
-AUDIO_DIR = str(Path(ASSETS_DIR) / "audio")
-MAP_DIR = str(Path(ASSETS_DIR) / "map")
+ASSETS_DIR = BASE_DIR / "assets"
+SPRITES_DIR = ASSETS_DIR / "princess"
+BACKGROUNDS_DIR = ASSETS_DIR / "backgrounds"
+AUDIO_DIR = ASSETS_DIR / "audio"
+MAP_DIR = ASSETS_DIR / "map"
 
 
 PARALLAX_PRESETS = {
@@ -118,13 +115,11 @@ ATTACK_DAMAGE = 1
 ATTACK_HIT_COOLDOWN_MS = 380
 HIT_SPARK_TIME_MS = 220
 
-MUSIC_LEVEL = "assets/audio/level_theme.mp3"
-MUSIC_BOSS = "assets/audio/boss_theme.mp3"
-MUSIC_VICTORY = "assets/audio/victory_theme.mp3"
+MUSIC_LEVEL = AUDIO_DIR / "level_theme.mp3"
+MUSIC_BOSS = AUDIO_DIR / "boss_theme.mp3"
+MUSIC_VICTORY = AUDIO_DIR / "victory_theme.mp3"
 MUSIC_VOLUME = 0.6
 
 CONFETTI_TIME_MS = 1600
 BOSS_DIM_COLOR = (10, 14, 26, 160)
 VICTORY_DIM_COLOR = (10, 14, 26, 120)
-
-__all__ = [name for name in globals() if name.isupper()]

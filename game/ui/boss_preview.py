@@ -1,11 +1,12 @@
-from __future__ import annotations
-
-from typing import Dict, Callable, Optional, List
+from collections.abc import Callable
+from pathlib import Path
 
 import pygame
 
-from game.utils import WIDTH, HEIGHT, FONT_SIZE, load_image
+from game.data.bosses import BossConfig
+from game.utils.constants import FONT_SIZE, HEIGHT, WIDTH
 from game.utils.fonts import load_font
+from game.utils.images import load_image
 
 PADDING = 24
 CARD_W = int(WIDTH * 0.78)
@@ -15,19 +16,21 @@ CARD_H = int(HEIGHT * 0.64)
 class BossPreview:
 
     def __init__(
-        self, font: pygame.font.Font, on_select: Optional[Callable[[Dict], None]] = None
+        self,
+        font: pygame.font.Font,
+        on_select: Callable[[BossConfig], None] | None = None,
     ):
         self.font = font
         self.active = False
-        self._items: List[Dict] = []
+        self._items: list[BossConfig] = []
         self._idx = 0
-        self._img_cache: dict[str, pygame.Surface] = {}
+        self._img_cache: dict[Path, pygame.Surface] = {}
         self.title_font = load_font(int(FONT_SIZE * 1.4))
         self.small = load_font(int(FONT_SIZE * 0.9))
         self.on_select = on_select
 
-    def open(self, bosses: List[Dict]):
-        self._items = bosses[:]
+    def open(self, bosses: tuple[BossConfig, ...]) -> None:
+        self._items = list(bosses)
         self._idx = 0
         self.active = bool(self._items)
 
@@ -87,15 +90,20 @@ class BossPreview:
         left_w = int(inner.w * 0.56)
         text_area = pygame.Rect(inner.x, inner.y, left_w, inner.h)
 
-        title = self.title_font.render(data.get("name", "BOSS"), True, (30, 40, 60))
+        title = self.title_font.render(data.name, True, (30, 40, 60))
         surface.blit(title, (text_area.x, text_area.y))
 
         y = text_area.y + title.get_height() + 12
-        for label, key in (("Опис:", "about"), ("Як бити:", "how"), ("Ціль:", "goal")):
+        sections = (
+            ("Опис:", data.about),
+            ("Як бити:", data.strategy),
+            ("Ціль:", data.goal),
+        )
+        for label, text in sections:
             lab = self.small.render(label, True, (60, 70, 90))
             surface.blit(lab, (text_area.x, y))
             y += lab.get_height() + 4
-            for ln in self._wrap(data.get(key, ""), text_area.w):
+            for ln in self._wrap(text, text_area.w):
                 surface.blit(ln, (text_area.x, y))
                 y += ln.get_height() + 2
             y += 8
@@ -115,18 +123,15 @@ class BossPreview:
         img_area = pygame.Rect(
             text_area.right + 18, inner.y, inner.w - left_w - 18, inner.h
         )
-        path = data.get("img")
-        if path:
-            img = self._img_cache.get(path)
-            if img is None:
-                raw = load_image(path)
-                max_w = img_area.w
-                max_h = img_area.h
-                iw, ih = raw.get_size()
-                scale = min(max_w / iw, max_h / ih, 1.0)
-                img = pygame.transform.smoothscale(
-                    raw, (int(iw * scale), int(ih * scale))
-                )
-                self._img_cache[path] = img
-            rect = img.get_rect(center=img_area.center)
-            surface.blit(img, rect)
+        path = data.image_path
+        img = self._img_cache.get(path)
+        if img is None:
+            raw = load_image(path)
+            max_w = img_area.w
+            max_h = img_area.h
+            iw, ih = raw.get_size()
+            scale = min(max_w / iw, max_h / ih, 1.0)
+            img = pygame.transform.smoothscale(raw, (int(iw * scale), int(ih * scale)))
+            self._img_cache[path] = img
+        rect = img.get_rect(center=img_area.center)
+        surface.blit(img, rect)

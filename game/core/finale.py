@@ -1,12 +1,10 @@
-from __future__ import annotations
-
-import os
-from typing import Optional, Sequence
+from collections.abc import Sequence
 
 import pygame
 
-from game.utils import FONT_SIZE
+from game.utils.constants import FONT_SIZE
 from game.utils.fonts import load_font
+from game.utils.paths import resolve_project_path
 
 
 class FinaleCinematic:
@@ -19,8 +17,8 @@ class FinaleCinematic:
         hug_candidates: Sequence[str] | None = None,
     ):
         self.duration_ms = duration_ms
-        self._start_ms: Optional[int] = None
-        self._hug_img: Optional[pygame.Surface] = None
+        self._start_ms: int | None = None
+        self._hug_img: pygame.Surface | None = None
         self._hug_candidates = tuple(
             hug_candidates
             or (
@@ -50,11 +48,12 @@ class FinaleCinematic:
         if self._hug_img is not None:
             return
         for candidate in self._hug_candidates:
-            if os.path.exists(candidate):
+            path = resolve_project_path(candidate)
+            if path.is_file():
                 try:
-                    self._hug_img = pygame.image.load(candidate).convert_alpha()
-                    break
-                except Exception:
+                    self._hug_img = pygame.image.load(path).convert_alpha()
+                    return
+                except (OSError, pygame.error):
                     continue
         if self._hug_img is None:
             self._hug_img = pygame.Surface((256, 256), pygame.SRCALPHA)
@@ -106,6 +105,3 @@ class FinaleCinematic:
                 hug_scaled,
                 (cx - target_w // 2, cy - target_h // 2 + int(h * 0.10)),
             )
-
-
-__all__ = ["FinaleCinematic"]

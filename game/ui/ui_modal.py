@@ -1,8 +1,6 @@
-from __future__ import annotations
-
 import pygame
 
-from game.utils import WIDTH, HEIGHT, VICTORY_DIM_COLOR, FONT_SIZE
+from game.utils.constants import FONT_SIZE, HEIGHT, VICTORY_DIM_COLOR, WIDTH
 from game.utils.fonts import load_font
 from game.utils.images import load_image, scale_to_height
 
@@ -21,11 +19,8 @@ class VictoryModal:
 
     def _load_avatar(self) -> None:
         path = "assets/mario/greeting.png"
-        try:
-            img = load_image(path)
-            self.avatar = scale_to_height(img, int(FONT_SIZE * 3.4))
-        except Exception:
-            self.avatar = None
+        img = load_image(path)
+        self.avatar = scale_to_height(img, int(FONT_SIZE * 3.4))
 
     @staticmethod
     def _wrap_lines(

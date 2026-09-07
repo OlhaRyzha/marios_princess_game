@@ -1,8 +1,6 @@
-from __future__ import annotations
+from typing import Literal
 
-from typing import Dict, Literal
-
-from game.utils import TARGET_H, CROUCH_SCALE
+from game.utils.constants import CROUCH_SCALE, TARGET_H
 
 LocationName = Literal["sunny_meadows", "mushroom_woods", "crystal_caves"]
 
@@ -36,18 +34,8 @@ CAVES_PATTERN = [
     ("MINECART_RAIL", "ground", 0),
 ]
 
-NEXT_LOCATION: Dict[LocationName, LocationName | None] = {
+NEXT_LOCATION: dict[LocationName, LocationName | None] = {
     "sunny_meadows": "mushroom_woods",
     "mushroom_woods": "crystal_caves",
     "crystal_caves": None,
 }
-
-__all__ = [
-    "LocationName",
-    "LOCATION_ORDER",
-    "crawl_gap",
-    "MEADOWS_PATTERN",
-    "WOODS_PATTERN",
-    "CAVES_PATTERN",
-    "NEXT_LOCATION",
-]
