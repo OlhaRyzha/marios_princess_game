@@ -71,9 +71,9 @@ class ParallaxBackground:
         self.l_mid: LayerLayout = layout["mid"]
         self.l_fore: LayerLayout = layout["fore"]
 
-        far_target = cast(int | None, self.l_far.get("target_h"))
-        mid_target = cast(int | None, self.l_mid.get("target_h"))
-        fore_target = cast(int | None, self.l_fore.get("target_h"))
+        far_target = self.l_far.get("target_h")
+        mid_target = self.l_mid.get("target_h")
+        fore_target = self.l_fore.get("target_h")
 
         self.far = _scale_to_height(far_raw, far_target)
         self.mid = _scale_to_height(mid_raw, mid_target)

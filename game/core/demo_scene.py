@@ -197,11 +197,10 @@ class DemoScene:
                     "victory.next", location=nxt.replace("_", " ").title()
                 ),
             ]
-            next_location = cast(LocationName, nxt)
             modal = VictoryModal(
                 title=title,
                 lines=lines,
-                on_continue=lambda: self.switch_location(next_location),
+                on_continue=lambda: self.switch_location(nxt),
                 localizer=self.localizer,
             )
             self.victory_modal = modal

@@ -14,7 +14,7 @@ class CollectibleSystem:
     def __init__(self, *, rng: random.Random, localizer: Localizer) -> None:
         self.rng = rng
         self.localizer = localizer
-        self.sprites = pygame.sprite.Group()
+        self.sprites: pygame.sprite.Group = pygame.sprite.Group()
         self.setup: CollectibleSet | None = None
         self.collected = 0
         self.icon: pygame.Surface | None = None

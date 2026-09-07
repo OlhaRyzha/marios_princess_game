@@ -286,16 +286,16 @@ class WorldMapScene:
                 return MapEvent(MapAction.BACK)
 
         elif e.type == pygame.MOUSEMOTION:
-            loc = self._loc_under_mouse(e.pos)
-            if loc is not None:
-                self.state.select(loc)
+            hovered_location = self._loc_under_mouse(e.pos)
+            if hovered_location is not None:
+                self.state.select(hovered_location)
 
         elif e.type == pygame.MOUSEBUTTONDOWN and e.button == 1:
-            loc = self._loc_under_mouse(e.pos)
-            if loc is not None:
-                self.state.select(loc)
-                if loc in self.unlocked:
-                    return MapEvent(MapAction.START, loc)
+            clicked_location = self._loc_under_mouse(e.pos)
+            if clicked_location is not None:
+                self.state.select(clicked_location)
+                if clicked_location in self.unlocked:
+                    return MapEvent(MapAction.START, clicked_location)
 
         return None
 

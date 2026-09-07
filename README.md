@@ -47,7 +47,7 @@ required.
 | `make run` | Start the desktop game |
 | `make format` | Apply Ruff fixes and Black formatting |
 | `make lint` | Run Ruff checks |
-| `make typecheck` | Run Pyright static type checks |
+| `make typecheck` | Run Pyright and mypy static type checks |
 | `make docstrings-check` | Require English docstrings |
 | `make test` | Run the test suite with headless SDL |
 | `make coverage` | Run tests with the 70% branch coverage threshold |

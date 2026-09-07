@@ -1,9 +1,22 @@
 import random
+from dataclasses import dataclass
 
 import pygame
 
 from game.systems.time_source import TimeSource
 from game.utils.constants import CONFETTI_TIME_MS, HIT_SPARK_TIME_MS
+
+Color = tuple[int, int, int]
+
+
+@dataclass(slots=True)
+class ConfettiParticle:
+    x: float
+    y: float
+    velocity_x: float
+    velocity_y: float
+    size: int
+    color: Color
 
 
 class HitSpark(pygame.sprite.Sprite):
@@ -55,14 +68,14 @@ class ConfettiBurst(pygame.sprite.Sprite):
         self.image = pygame.Surface((1, 1), pygame.SRCALPHA)
         self.rect = rect.copy()
         self.start_ms = self.time_source.now_ms()
-        self.particles = []
-        colors = [
+        self.particles: list[ConfettiParticle] = []
+        colors: tuple[Color, ...] = (
             (255, 95, 95),
             (255, 190, 70),
             (120, 210, 120),
             (90, 170, 255),
             (200, 120, 255),
-        ]
+        )
         for _ in range(80):
             x = rng.randint(self.rect.left + 40, self.rect.right - 40)
             y = self.rect.top - 10
@@ -70,18 +83,27 @@ class ConfettiBurst(pygame.sprite.Sprite):
             vy = rng.uniform(0.2, 1.2)
             size = rng.randint(3, 6)
             col = rng.choice(colors)
-            self.particles.append([x, y, vx, vy, size, col])
+            self.particles.append(ConfettiParticle(x, y, vx, vy, size, col))
 
     def update(self, dt: float):
         if self.time_source.now_ms() - self.start_ms >= CONFETTI_TIME_MS:
             self.kill()
             return
 
-        for p in self.particles:
-            p[0] += p[2] * 60 * dt
-            p[1] += p[3] * 60 * dt
-            p[3] += 0.02
+        for particle in self.particles:
+            particle.x += particle.velocity_x * 60 * dt
+            particle.y += particle.velocity_y * 60 * dt
+            particle.velocity_y += 0.02
 
     def draw(self, surface: pygame.Surface, camera_x: float):
-        for x, y, _, _, s, col in self.particles:
-            pygame.draw.rect(surface, col, (int(x - camera_x), int(y), s, s))
+        for particle in self.particles:
+            pygame.draw.rect(
+                surface,
+                particle.color,
+                (
+                    int(particle.x - camera_x),
+                    int(particle.y),
+                    particle.size,
+                    particle.size,
+                ),
+            )

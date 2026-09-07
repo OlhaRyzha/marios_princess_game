@@ -11,6 +11,7 @@ dependencies = [
 [dependency-groups]
 dev = [
     "black>=25.9.0",
+    "mypy>=2.3.1",
     "pre-commit>=4.3.0",
     "pygbag>=0.9.2,<1",
     "pyright>=1.1.411",
@@ -43,6 +44,15 @@ testpaths = ["tests"]
 include = ["game", "scripts", "tests", "main.py"]
 pythonVersion = "3.13"
 typeCheckingMode = "standard"
+
+[tool.mypy]
+explicit_package_bases = true
+files = ["game", "tests", "scripts", "main.py"]
+python_version = "3.13"
+show_error_codes = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+check_untyped_defs = true
 
 [tool.coverage.run]
 branch = true

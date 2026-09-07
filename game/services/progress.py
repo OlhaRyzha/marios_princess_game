@@ -35,9 +35,7 @@ def _to_json(snapshot: ProgressSnapshot) -> str:
 def _locations(values: Iterable[object]) -> frozenset[LocationName]:
     valid_locations = set(LOCATION_ORDER)
     return frozenset(
-        cast(LocationName, value)
-        for value in values
-        if isinstance(value, str) and value in valid_locations
+        value for value in values if isinstance(value, str) and value in valid_locations
     )
 
 
@@ -61,7 +59,7 @@ def _from_json(content: str) -> ProgressSnapshot | None:
     return ProgressSnapshot(
         unlocked=unlocked,
         completed=_locations(completed_value),
-        pending_location=cast(LocationName, pending_value),
+        pending_location=pending_value,
     )
 
 

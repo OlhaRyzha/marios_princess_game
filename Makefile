@@ -36,6 +36,7 @@ lint:
 
 typecheck:
 	uv run pyright
+	uv run mypy game tests scripts main.py
 
 docstrings-check:
 	uv run python scripts/check_docstrings.py
