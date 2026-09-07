@@ -46,3 +46,4 @@ class GameState[SceneT]:
     running: bool = True
     audio_armed: bool = False
     time_accumulator: float = 0.0
+    scene_load_pending: bool = False

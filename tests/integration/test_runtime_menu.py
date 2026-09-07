@@ -12,6 +12,12 @@ def test_main_menu_starts_game_scene(game_runtime: GameRuntime) -> None:
     game_runtime.tick()
 
     assert game_runtime.state.mode is GameMode.GAME
+    assert game_runtime.state.scene_load_pending
+    assert game_runtime.state.scene is None
+
+    game_runtime.tick()
+
+    assert not game_runtime.state.scene_load_pending
     assert game_runtime.state.scene is not None
     assert game_runtime.state.scene.time_source is game_runtime.time_source
     assert game_runtime.state.scene.input_source is game_runtime.input_source

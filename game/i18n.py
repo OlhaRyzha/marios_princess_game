@@ -41,6 +41,7 @@ TRANSLATIONS: dict[Language, dict[str, str]] = {
         "victory.finish": "Натисни Enter, щоб завершити гру",
         "victory.continue": "Enter: продовжити",
         "game.help": "←/→: рух  •  Space: стрибок  •  ↓: присісти  •  J: атака",
+        "game.loading": "Завантаження…",
     },
     Language.EN: {
         "menu.start": "Start Game",
@@ -66,6 +67,7 @@ TRANSLATIONS: dict[Language, dict[str, str]] = {
         "victory.finish": "Press Enter to finish the game",
         "victory.continue": "Enter: continue",
         "game.help": "Left/Right: move  •  Space: jump  •  Down: crouch  •  J: attack",
+        "game.loading": "Loading…",
     },
 }
 

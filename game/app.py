@@ -70,7 +70,7 @@ def run_frame(
 
     def apply_effect(effect: ControllerEffect | None) -> None:
         if effect is ControllerEffect.START_SCENE:
-            start_scene()
+            state.scene_load_pending = True
         elif effect is ControllerEffect.OPEN_CONTROLS:
             menu.open_controls()
 
@@ -79,6 +79,10 @@ def run_frame(
             menu.set_items(MAIN_MENU_ITEMS)
         elif state.mode is GameMode.MENU_PAUSE:
             menu.set_items(PAUSE_MENU_ITEMS)
+
+    if state.scene_load_pending:
+        start_scene()
+        state.scene_load_pending = False
 
     dt = clock.tick(FPS) / dt_scale
     dt = min(dt, 0.1)
@@ -103,7 +107,10 @@ def run_frame(
     else:
         state.time_accumulator = 0.0
 
-    renderer.draw(state)
+    if state.scene_load_pending:
+        renderer.draw_loading()
+    else:
+        renderer.draw(state)
 
 
 class GameRuntime:
