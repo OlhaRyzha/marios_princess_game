@@ -1,4 +1,82 @@
+import math
+import random
+from dataclasses import dataclass
+
 import pygame
+
+from game.data.locations import LocationName
+from game.systems.time_source import TimeSource
+
+
+@dataclass(frozen=True, slots=True)
+class FogParticle:
+    base_angle: float
+    radius_factor: float
+    speed: float
+    wobble: float
+    size: int
+    phase: float
+
+
+class MapFog:
+    """Generate and draw animated fog for every map node."""
+
+    def __init__(
+        self,
+        *,
+        locations: list[LocationName],
+        rng: random.Random,
+        time_source: TimeSource,
+        radius: int,
+        particle_count: int = 14,
+    ) -> None:
+        self.time_source = time_source
+        self.radius = radius
+        self.particles = {
+            location: [self._make_particle(rng) for _ in range(particle_count)]
+            for location in locations
+        }
+
+    @staticmethod
+    def _make_particle(rng: random.Random) -> FogParticle:
+        return FogParticle(
+            base_angle=rng.uniform(0.0, math.tau),
+            radius_factor=rng.uniform(0.2, 0.9),
+            speed=rng.uniform(0.45, 0.85),
+            wobble=rng.uniform(0.55, 0.95),
+            size=rng.randint(3, 7),
+            phase=rng.uniform(0.0, math.tau),
+        )
+
+    def draw(
+        self,
+        surface: pygame.Surface,
+        location: LocationName,
+        center: tuple[int, int],
+        intensity: float,
+    ) -> None:
+        nodes = self.particles.get(location)
+        if not nodes:
+            return
+        diameter = self.radius * 2
+        fog = pygame.Surface((diameter, diameter), pygame.SRCALPHA)
+        now = self.time_source.now_ms() / 1000.0
+        margin = 6
+        max_radius_squared = (self.radius - margin) ** 2
+        for particle in nodes:
+            angle = particle.base_angle + now * particle.speed
+            phase = now * 0.45 + particle.phase
+            orbit = particle.radius_factor * (self.radius - margin)
+            x = self.radius + math.cos(angle) * orbit
+            y = self.radius + math.sin(angle * particle.wobble + phase) * orbit * 0.86
+            if (x - self.radius) ** 2 + (y - self.radius) ** 2 > max_radius_squared:
+                continue
+            pulse = 0.55 + 0.45 * math.sin(angle * 1.7 + phase)
+            alpha = max(18, min(190, int(30 + 140 * intensity * pulse)))
+            pygame.draw.circle(
+                fog, (255, 255, 255, alpha), (round(x), round(y)), particle.size
+            )
+        surface.blit(fog, fog.get_rect(center=center))
 
 
 def lerp(start: float, end: float, factor: float) -> float:

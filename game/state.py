@@ -15,7 +15,7 @@ class GameMode(StrEnum):
 @dataclass(slots=True)
 class Progress:
     unlocked: set[LocationName] = field(default_factory=lambda: {LOCATION_ORDER[0]})
-    completed: set[LocationName] = field(default_factory=set)
+    completed: set[LocationName] = field(default_factory=set[LocationName])
     pending_location: LocationName = LOCATION_ORDER[0]
 
     def complete(self, location: LocationName) -> bool:

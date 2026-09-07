@@ -42,7 +42,11 @@ ENV/
 # ------------------------------
 # TOOLS & EDITORS
 # ------------------------------
-.vscode/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/launch.json
+!.vscode/settings.json
+!.vscode/tasks.json
 .idea/
 *.sublime-workspace
 *.sublime-project

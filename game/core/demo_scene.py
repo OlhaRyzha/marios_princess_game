@@ -6,7 +6,7 @@ import pygame
 from pygame.sprite import Group
 
 from game.core.background import ParallaxBackground
-from game.core.boss_actor import BossActor
+from game.core.boss_arena import BossArena
 from game.core.camera import LevelCamera
 from game.core.collectible_system import CollectibleSystem
 from game.core.collision import CollisionSprite, collide_mask
@@ -95,6 +95,7 @@ class DemoScene:
         self._boss_trigger_rect = pygame.Rect(0, 0, 48, self.screen.get_height())
 
         self.camera = LevelCamera(WIDTH, LEVEL_WIDTH)
+        self.boss_arena = BossArena(WIDTH, LEVEL_WIDTH)
         self.font = load_font(FONT_SIZE)
         self.hud = HealthHUD()
 
@@ -223,49 +224,12 @@ class DemoScene:
         self.audio_service.stop_music()
         self.audio_service.play_music(MUSIC_BOSS, loop=True)
 
-        view_left = self.camera_x
-        view_right = self.camera_x + WIDTH
-
-        left_margin = 120
-        self.player.pos.x = max(
-            view_left + left_margin, min(self.player.pos.x, view_right - left_margin)
-        )
-        self._sync_player_rect()
-
-        pre_x = max(120, min(view_right - 140, LEVEL_WIDTH - 120))
-        boss_actor = BossActor(
-            name=boss.name,
-            image_path=boss.image_path,
-            x=int(pre_x),
+        boss_actor, self.camera_x = self.boss_arena.arrange(
+            player=self.player,
+            boss=boss,
+            camera_x=self.camera_x,
             time_source=self.time_source,
         )
-
-        desired_right = view_right - 120
-        boss_actor.rect.right = int(desired_right)
-
-        min_left_visible = view_left + 40
-        max_right_visible = view_right - 40
-        if boss_actor.rect.left < min_left_visible:
-            boss_actor.rect.left = int(min_left_visible)
-        if boss_actor.rect.right > max_right_visible:
-            boss_actor.rect.right = int(max_right_visible)
-
-        min_gap = 140
-        if self.player.rect.right > boss_actor.rect.left - min_gap:
-            new_px: float = boss_actor.rect.left - min_gap - self.player.rect.width // 2
-            new_px = max(view_left + left_margin, new_px)
-            self.player.pos.x = new_px
-            self._sync_player_rect()
-
-        min_cam = max(0, boss_actor.rect.right - (WIDTH - 80))
-        max_cam = min(LEVEL_WIDTH - WIDTH, self.player.pos.x - 80)
-        if min_cam <= max_cam:
-            self.camera_x = max(min_cam, min(self.camera_x, max_cam))
-        else:
-            self.camera_x = max(
-                0, min(boss_actor.rect.centerx - (WIDTH - 140), LEVEL_WIDTH - WIDTH)
-            )
-
         self.combat.start_boss(boss_actor)
 
     def _handle_obstacle_collisions(self):

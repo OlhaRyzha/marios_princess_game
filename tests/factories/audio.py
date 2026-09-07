@@ -4,7 +4,9 @@ from pathlib import Path
 
 @dataclass(slots=True)
 class RecordingAudioService:
-    played_tracks: list[tuple[str | Path, bool]] = field(default_factory=list)
+    played_tracks: list[tuple[str | Path, bool]] = field(
+        default_factory=list[tuple[str | Path, bool]]
+    )
     stop_count: int = 0
     arm_count: int = 0
     armed: bool = False

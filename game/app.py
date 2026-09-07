@@ -163,7 +163,7 @@ class GameRuntime:
             is_web=self.is_web,
             toggle_fullscreen=self._toggle_fullscreen,
         )
-        self.renderer = FrameRenderer(
+        self.renderer = FrameRenderer[DemoScene](
             screen=self.screen,
             menu=self.menu,
             world_map=self.world_map,
