@@ -191,27 +191,96 @@ function show_infobox() {
 
     <style>
         #status {
-            display: inline-block;
-            vertical-align: top;
-            margin-top: 20px;
-            margin-left: 30px;
-            font-weight: bold;
-            color: rgb(120, 120, 120);
+            margin-top: 28px;
+            color: rgba(255, 245, 252, 0.86);
+            font-size: 14px;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
         }
 
         #progress {
-            height: 20px;
-            width: 300px;
+            width: min(320px, 72vw);
+            height: 8px;
+            margin-top: 10px;
+            border: 0;
+            border-radius: 999px;
+            overflow: hidden;
+            accent-color: #ff91b8;
         }
 
         #infobox {
-            position: fixed; /* center relative to viewport */
-            background: green;
-            color: blue;
-            font-weight: bold;
-            padding: 12px 24px;
- /*           display: none; */
+            position: fixed;
+            width: min(390px, calc(100vw - 56px));
+            padding: 30px 34px 28px;
+            overflow: hidden;
+            color: #fff8fc;
+            text-align: center;
+            background: linear-gradient(145deg, rgba(73, 39, 91, 0.96), rgba(38, 27, 66, 0.97));
+            border: 2px solid rgba(255, 215, 235, 0.72);
+            border-radius: 28px;
+            box-shadow: 0 24px 70px rgba(25, 12, 40, 0.48), inset 0 1px 0 rgba(255, 255, 255, 0.2);
             z-index: 999999;
+        }
+
+        .loading-crown {
+            width: 88px;
+            height: 88px;
+            object-fit: contain;
+            image-rendering: pixelated;
+            filter: drop-shadow(0 8px 14px rgba(255, 112, 169, 0.34));
+            animation: loading-float 2.2s ease-in-out infinite;
+        }
+
+        .loading-title {
+            margin-top: 10px;
+            font-family: Georgia, serif;
+            font-size: clamp(27px, 5vw, 36px);
+            font-weight: 700;
+            letter-spacing: 0.01em;
+            text-shadow: 0 3px 0 rgba(120, 48, 91, 0.72);
+        }
+
+        .loading-message {
+            margin-top: 8px;
+            color: #f7dce9;
+            font-size: 15px;
+        }
+
+        .loading-track {
+            height: 12px;
+            margin-top: 24px;
+            overflow: hidden;
+            background: rgba(20, 12, 35, 0.56);
+            border: 1px solid rgba(255, 236, 245, 0.32);
+            border-radius: 999px;
+        }
+
+        .loading-track span {
+            display: block;
+            width: 42%;
+            height: 100%;
+            background: linear-gradient(90deg, #ff77aa, #ffd273, #ff94c0);
+            border-radius: inherit;
+            box-shadow: 0 0 18px rgba(255, 145, 188, 0.8);
+            animation: loading-progress 1.35s ease-in-out infinite;
+        }
+
+        .loading-note {
+            margin-top: 12px;
+            color: rgba(255, 244, 250, 0.68);
+            font-size: 12px;
+        }
+
+        @keyframes loading-float {
+            0%, 100% { transform: translateY(0) rotate(-2deg); }
+            50% { transform: translateY(-7px) rotate(2deg); }
+        }
+
+        @keyframes loading-progress {
+            0% { transform: translateX(-110%); }
+            55% { transform: translateX(120%); }
+            100% { transform: translateX(245%); }
         }
         div.emscripten { text-align: center; }
         div.emscripten_border { border: 1px solid black; }
@@ -237,10 +306,16 @@ function show_infobox() {
         }
 
         body {
-            font-family: arial;
+            min-height: 100vh;
+            overflow: hidden;
+            font-family: Arial, sans-serif;
             margin: 0;
-            padding: none;
-            background-color:powderblue;
+            padding: 0;
+            background:
+                radial-gradient(circle at 18% 20%, rgba(255,255,255,.72) 0 2px, transparent 3px),
+                radial-gradient(circle at 82% 16%, rgba(255,228,155,.8) 0 2px, transparent 3px),
+                radial-gradient(circle at 68% 72%, rgba(255,255,255,.5) 0 1px, transparent 2px),
+                linear-gradient(160deg, #c38cbb 0%, #76568f 48%, #302549 100%);
         }
 
         .topright{
@@ -312,7 +387,13 @@ height="{{cookiecutter.height}}px"
     oncontextmenu="event.preventDefault()" tabindex=1 hidden>
     </canvas>
 
-    <div id="infobox">Loading, please wait ...</div>
+    <div id="infobox" role="status" aria-live="polite">
+        <img class="loading-crown" src="favicon.png" alt="">
+        <div class="loading-title">Mario’s Princess</div>
+        <div class="loading-message">Готуємо королівство до пригоди…</div>
+        <div class="loading-track" aria-hidden="true"><span></span></div>
+        <div class="loading-note">Перший запуск може тривати кілька секунд</div>
+    </div>
 
     <div id=html></div>
 

@@ -29,6 +29,8 @@ def verify_web_build(archive_path: Path) -> None:
         raise ValueError(f"Web archive is missing required files: {missing}")
     if "http://localhost" in index_html:
         raise ValueError("Web archive contains a localhost runtime URL")
+    if 'class="loading-track"' not in index_html:
+        raise ValueError("Web archive is missing the themed loading screen")
 
 
 if __name__ == "__main__":
