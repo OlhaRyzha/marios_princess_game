@@ -14,6 +14,35 @@ class BossArena:
     level_width: int
     left_margin: int = 120
 
+    def keep_actors_visible(
+        self,
+        *,
+        player: Princess,
+        boss: BossActor,
+        camera_x: float,
+        edge_padding: int = 40,
+    ) -> None:
+        """Keep both combatants inside the current arena viewport."""
+        view_left = camera_x + edge_padding
+        view_right = camera_x + self.viewport_width - edge_padding
+
+        player_half_width = player.rect.width / 2
+        clamped_player_x = max(
+            view_left + player_half_width,
+            min(player.pos.x, view_right - player_half_width),
+        )
+        if clamped_player_x != player.pos.x:
+            player.pos.x = clamped_player_x
+            player.vel.x = 0
+            player.rect.midbottom = (int(player.pos.x), int(player.pos.y))
+
+        if boss.rect.left < view_left:
+            boss.rect.left = int(view_left)
+            boss.vel.x = 0
+        elif boss.rect.right > view_right:
+            boss.rect.right = int(view_right)
+            boss.vel.x = 0
+
     def arrange(
         self,
         *,

@@ -5,6 +5,7 @@ from typing import cast
 import pygame
 
 from game.core.background import ParallaxBackground
+from game.core.boss_actor import BossActor
 from game.core.boss_arena import BossArena
 from game.core.camera import LevelCamera
 from game.core.collectible_system import CollectibleSystem
@@ -151,7 +152,20 @@ class DemoScene:
             self.boss_preview.handle_key(event)
 
     def _update_camera(self):
-        self.camera.follow(self.player.pos.x)
+        if self.mode != "boss":
+            self.camera.follow(self.player.pos.x)
+
+    def _keep_boss_fight_visible(self) -> None:
+        if self.mode != "boss":
+            return
+        boss = next(iter(self.boss_group), None)
+        if boss is None:
+            return
+        self.boss_arena.keep_actors_visible(
+            player=self.player,
+            boss=cast(BossActor, boss),
+            camera_x=self.camera_x,
+        )
 
     @property
     def camera_x(self) -> float:
@@ -297,6 +311,7 @@ class DemoScene:
         self.collectibles.update(dt)
 
         self.combat.update(dt)
+        self._keep_boss_fight_visible()
         self._update_camera()
         if self._collectible_hint_timer > 0.0:
             self._collectible_hint_timer = max(0.0, self._collectible_hint_timer - dt)
@@ -335,7 +350,7 @@ class DemoScene:
         w, h = 320, 16
         offset_x = 72
         x = (self.screen.get_width() - w) // 2 + offset_x
-        y = 18
+        y = 64
         pygame.draw.rect(self.screen, (30, 30, 30), (x, y, w, h), border_radius=6)
         pygame.draw.rect(self.screen, (220, 220, 220), (x, y, w, h), 2, border_radius=6)
         ratio = boss.health / boss.max_health if boss.max_health > 0 else 0

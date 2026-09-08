@@ -93,7 +93,9 @@ GROUND_THEMES = {
 }
 
 
-OBSTACLE_SCALE = 0.1
+# Source images are web-optimized to half their original dimensions. This
+# factor preserves the established obstacle size independently of that change.
+OBSTACLE_SCALE = 0.2
 
 
 MAX_HEALTH = 5
@@ -105,7 +107,7 @@ DIR_BUFFER_MS = 120
 AIR_ACCEL = 0.35
 AIR_MAX_SPEED = 6.5
 AIR_FRICTION = 0.015
-BOSS_SCALE = 0.32
+BOSS_WIDTH = 328
 BOSS_MAX_HEALTH = 6
 BOSS_SPEED = 1.8
 BOSS_JUMP_V = -12.0
