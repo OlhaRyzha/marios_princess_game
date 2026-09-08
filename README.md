@@ -65,6 +65,10 @@ make pre-commit-install
 Add runtime packages with `uv add <package>` and development tools with
 `uv add --dev <package>`. Do not edit `.venv` or `uv.lock` manually.
 
+Transparent game art stays in PNG. Only fully opaque backgrounds use
+high-quality JPEG, and browser audio uses OGG Vorbis at 24 kHz. This keeps alpha
+edges and tiled layers intact while reducing the initial browser download.
+
 ## Project structure
 
 ```text

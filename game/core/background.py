@@ -61,7 +61,7 @@ class ParallaxBackground:
         self.location = location
         loc_dir = os.path.join(BACKGROUNDS_DIR, location)
 
-        self.sky = load_image(os.path.join(loc_dir, "sky.png"))
+        self.sky = load_image(os.path.join(loc_dir, "sky.jpg"))
         far_raw = load_image(os.path.join(loc_dir, "far.png"))
         mid_raw = load_image(os.path.join(loc_dir, "mid.png"))
         fore_raw = load_image(os.path.join(loc_dir, "fore.png"))

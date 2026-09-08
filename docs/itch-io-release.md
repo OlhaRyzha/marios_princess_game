@@ -32,6 +32,10 @@ make web-serve
 Open `http://localhost:8000`. The command serves the same verified archive that
 will be uploaded to itch.io.
 
+Keep transparent and tiled artwork in PNG. JPEG is allowed only for a fully
+opaque background after SSIM and browser screenshot checks. Use OGG Vorbis for
+audio, and never use palette quantization or dithering for game layers.
+
 If port 8000 is busy, use `make web-serve WEB_PORT=8001` and open
 `http://localhost:8001`.
 

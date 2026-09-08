@@ -60,8 +60,8 @@ FOG_INTENSITY: dict[str, float] = {
 }
 
 
-FALLBACK_BG = os.path.join(BACKGROUNDS_DIR, "mushroom_woods", "sky.png")
-MAP_IMAGE = os.path.join(MAP_DIR, "map.png")
+FALLBACK_BG = os.path.join(BACKGROUNDS_DIR, "mushroom_woods", "sky.jpg")
+MAP_IMAGE = os.path.join(MAP_DIR, "map.jpg")
 
 MARIO_DIR = os.path.join(ASSETS_DIR, "mario")
 MARIO_FILES = [

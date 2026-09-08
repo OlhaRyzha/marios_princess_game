@@ -14,7 +14,7 @@ run:
 web-build:
 	rm -rf build/web build/web.zip
 	mkdir -p build/web
-	uv run pygbag --build --archive --no_opt --template pygbag.tmpl --PYBUILD 3.13 --disable-sound-format-error .
+	uv run pygbag --build --archive --no_opt --template pygbag.tmpl --PYBUILD 3.13 .
 
 web-check: web-build
 	uv run python scripts/verify_web_build.py

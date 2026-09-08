@@ -116,9 +116,9 @@ ATTACK_DAMAGE = 1
 ATTACK_HIT_COOLDOWN_MS = 380
 HIT_SPARK_TIME_MS = 220
 
-MUSIC_LEVEL = AUDIO_DIR / "level_theme.mp3"
-MUSIC_BOSS = AUDIO_DIR / "boss_theme.mp3"
-MUSIC_VICTORY = AUDIO_DIR / "victory_theme.mp3"
+MUSIC_LEVEL = AUDIO_DIR / "level_theme.ogg"
+MUSIC_BOSS = AUDIO_DIR / "boss_theme.ogg"
+MUSIC_VICTORY = AUDIO_DIR / "victory_theme.ogg"
 MUSIC_VOLUME = 0.6
 
 CONFETTI_TIME_MS = 1600

@@ -10,7 +10,7 @@ from game.i18n import LocalizedText, Localizer
 from game.utils.constants import BACKGROUNDS_DIR, FONT_SIZE, HEIGHT, WIDTH
 from game.utils.fonts import load_font
 
-MENU_BG_PATH = os.path.join(BACKGROUNDS_DIR, "mushroom_woods", "sky.png")
+MENU_BG_PATH = os.path.join(BACKGROUNDS_DIR, "mushroom_woods", "sky.jpg")
 logger = logging.getLogger(__name__)
 
 TITLE_TEXT = "Mario’s Princess"
