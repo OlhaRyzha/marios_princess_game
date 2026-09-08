@@ -1,4 +1,4 @@
-.PHONY: install upgrade run web-build web-check web-serve web-publish format format-check lint typecheck docstrings-check assets-check test coverage check pre-commit-install pre-commit clean
+.PHONY: install upgrade run web-build web-check web-serve web-publish format format-check lint typecheck docstrings-check assets-check version-check optimize-assets test coverage check pre-commit-install pre-commit clean
 
 WEB_PORT ?= 8000
 
@@ -46,13 +46,19 @@ docstrings-check:
 assets-check:
 	uv run python scripts/check_assets.py
 
+version-check:
+	uv run python scripts/check_version.py
+
+optimize-assets:
+	uv run python scripts/optimize_web_assets.py
+
 test:
 	SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy PYGAME_HIDE_SUPPORT_PROMPT=1 uv run pytest
 
 coverage:
 	SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy PYGAME_HIDE_SUPPORT_PROMPT=1 uv run pytest --cov=game --cov-report=term-missing:skip-covered
 
-check: format-check typecheck docstrings-check assets-check test
+check: format-check typecheck docstrings-check assets-check version-check test
 
 pre-commit-install:
 	uv run pre-commit install

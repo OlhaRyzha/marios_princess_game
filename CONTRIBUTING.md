@@ -47,3 +47,11 @@ For gameplay or rendering changes, verify this short path after automated checks
 4. Collect the required items and enter the boss fight.
 5. Defeat the boss and continue to the next location.
 6. Complete the final location and close the victory screen.
+
+# Commit messages
+
+Use Conventional Commits so automated versioning can classify each change:
+
+- `fix: restore boss collision` for a patch release;
+- `feat: add language selector` for a minor release;
+- include `BREAKING CHANGE:` in the body for a major release.
