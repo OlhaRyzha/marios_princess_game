@@ -7,8 +7,8 @@ from game.utils.constants import (
     BOSS_HIT_COOLDOWN_MS,
     BOSS_JUMP_V,
     BOSS_MAX_HEALTH,
-    BOSS_SCALE,
     BOSS_SPEED,
+    BOSS_WIDTH,
     GRAVITY,
     GROUND_Y,
 )
@@ -30,8 +30,9 @@ class BossActor(pygame.sprite.Sprite):
         self.name = name
         raw: pygame.Surface = load_image(image_path)
         w, h = raw.get_size()
+        target_height = max(1, round(h * BOSS_WIDTH / w))
         self.base_image: pygame.Surface = pygame.transform.smoothscale(
-            raw, (int(w * BOSS_SCALE), int(h * BOSS_SCALE))
+            raw, (BOSS_WIDTH, target_height)
         )
         self.image: pygame.Surface = self.base_image
         self.rect: pygame.Rect = self.image.get_rect(midbottom=(x, GROUND_Y))

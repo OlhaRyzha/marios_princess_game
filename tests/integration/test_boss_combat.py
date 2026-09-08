@@ -8,6 +8,7 @@ from game.i18n import Localizer
 from game.scene_factory import SceneFactory
 from game.state import GameMode
 from game.systems.input_state import InputState
+from game.utils.constants import BOSS_WIDTH
 from tests.factories.audio import RecordingAudioService
 from tests.factories.input import FakeInputSource
 from tests.factories.time import FakeTimeSource
@@ -37,6 +38,7 @@ def test_attack_input_shoots_heart_during_boss_fight(
     assert len(scene.projectiles) == 1
 
     boss = next(iter(scene.boss_group))
+    assert boss.rect.width == BOSS_WIDTH
     projectile = next(iter(scene.projectiles))
     projectile.rect.center = boss.rect.center
     health_before_hit = boss.health
@@ -64,3 +66,32 @@ def test_runtime_does_not_lose_a_short_attack_keypress(
     game_runtime.tick()
 
     assert len(scene.projectiles) == 1
+
+
+def test_boss_fight_keeps_player_and_boss_inside_viewport(
+    pygame_runtime: None,
+) -> None:
+    screen = pygame.display.get_surface()
+    assert screen is not None
+    scene = SceneFactory(
+        screen=screen,
+        time_source=FakeTimeSource(),
+        input_source=FakeInputSource(),
+        rng=random.Random(2026),
+        audio_service=RecordingAudioService(),
+        localizer=Localizer(),
+    ).create_game_scene("sunny_meadows", on_location_completed=lambda location: None)
+    scene.boss_preview.open(BOSS_ROSTER["sunny_meadows"])
+    scene.handle_event(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_RETURN))
+    camera_x = scene.camera_x
+    boss = next(iter(scene.boss_group))
+
+    scene.player.pos.x = camera_x - scene.player.rect.width
+    scene.player.vel.x = -20
+    boss.rect.left = int(camera_x + scene.boss_arena.viewport_width + 100)
+    boss.vel.x = 20
+    scene.update(1 / 60)
+
+    assert scene.camera_x == camera_x
+    assert scene.player.rect.left >= camera_x + 40
+    assert boss.rect.right <= camera_x + scene.boss_arena.viewport_width - 40
