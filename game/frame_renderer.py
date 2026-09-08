@@ -17,7 +17,7 @@ class FrameRenderer[SceneT: DrawableScene]:
     def __init__(
         self,
         *,
-        screen: pygame.Surface,
+        screen: "pygame.Surface",
         menu: StartMenu,
         world_map: WorldMapScene,
     ) -> None:

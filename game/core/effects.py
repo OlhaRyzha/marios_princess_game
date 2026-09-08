@@ -32,7 +32,7 @@ class HitSpark(pygame.sprite.Sprite):
         if self.time_source.now_ms() - self.start_ms >= HIT_SPARK_TIME_MS:
             self.kill()
 
-    def draw(self, surface: pygame.Surface, camera_x: float):
+    def draw(self, surface: "pygame.Surface", camera_x: float):
         age = self.time_source.now_ms() - self.start_ms
         t = max(0.0, min(1.0, age / HIT_SPARK_TIME_MS))
         cx = int(self.pos.x - camera_x)
@@ -58,7 +58,7 @@ class HitSpark(pygame.sprite.Sprite):
 class ConfettiBurst(pygame.sprite.Sprite):
     def __init__(
         self,
-        rect: pygame.Rect,
+        rect: "pygame.Rect",
         *,
         time_source: TimeSource,
         rng: random.Random,
@@ -95,7 +95,7 @@ class ConfettiBurst(pygame.sprite.Sprite):
             particle.y += particle.velocity_y * 60 * dt
             particle.velocity_y += 0.02
 
-    def draw(self, surface: pygame.Surface, camera_x: float):
+    def draw(self, surface: "pygame.Surface", camera_x: float):
         for particle in self.particles:
             pygame.draw.rect(
                 surface,

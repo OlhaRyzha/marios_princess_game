@@ -6,7 +6,7 @@ from game.utils.images import load_image, scale_to_height
 
 def load_sequence(
     folder: str, prefix: str, target_h: int | None = TARGET_H
-) -> list[pygame.Surface]:
+) -> "list[pygame.Surface]":
     path = SPRITES_DIR / folder
     if not path.is_dir():
         return []

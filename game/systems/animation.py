@@ -5,7 +5,10 @@ import pygame
 
 class Animation:
     def __init__(
-        self, frames: Iterable[pygame.Surface] | None, fps: int = 10, loop: bool = True
+        self,
+        frames: "Iterable[pygame.Surface] | None",
+        fps: int = 10,
+        loop: bool = True,
     ):
         frame_list = list(frames) if frames is not None else []
         if not frame_list:
@@ -21,7 +24,7 @@ class Animation:
     def update(self, dt: float) -> None:
         self.time += dt
 
-    def image(self) -> pygame.Surface:
+    def image(self) -> "pygame.Surface":
         idx = int(self.time * self.fps)
         if self.loop:
             idx %= len(self.frames)

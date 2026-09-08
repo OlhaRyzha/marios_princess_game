@@ -67,7 +67,7 @@ class CollectibleSystem:
             else Collectible.icon(self.setup.kind, size=26)
         )
 
-    def collect(self, player_rect: pygame.Rect) -> list[tuple[int, int]]:
+    def collect(self, player_rect: "pygame.Rect") -> list[tuple[int, int]]:
         hits = [item for item in self.sprites if player_rect.colliderect(item.rect)]
         positions = [item.rect.center for item in hits]
         for item in hits:
@@ -78,7 +78,7 @@ class CollectibleSystem:
     @staticmethod
     def _load_surfaces(
         setup: CollectibleSet,
-    ) -> tuple[pygame.Surface | None, pygame.Surface | None]:
+    ) -> "tuple[pygame.Surface | None, pygame.Surface | None]":
         if setup.image_path is None:
             return None, None
         try:

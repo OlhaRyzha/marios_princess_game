@@ -3,7 +3,6 @@ from collections.abc import Callable
 from typing import cast
 
 import pygame
-from pygame.sprite import Group
 
 from game.core.background import ParallaxBackground
 from game.core.boss_arena import BossArena
@@ -46,7 +45,7 @@ class DemoScene:
 
     def __init__(
         self,
-        screen: pygame.Surface,
+        screen: "pygame.Surface",
         location: LocationName = "sunny_meadows",
         *,
         time_source: TimeSource,
@@ -69,11 +68,11 @@ class DemoScene:
             (self.START_X, GROUND_Y), time_source=self.time_source
         )
 
-        self.all_sprites: Group = Group()
-        self.obstacles: Group = Group()
-        self.boss_group: Group = Group()
-        self.fx_group: Group = Group()
-        self.projectiles: Group = Group()
+        self.all_sprites: pygame.sprite.Group = pygame.sprite.Group()
+        self.obstacles: pygame.sprite.Group = pygame.sprite.Group()
+        self.boss_group: pygame.sprite.Group = pygame.sprite.Group()
+        self.fx_group: pygame.sprite.Group = pygame.sprite.Group()
+        self.projectiles: pygame.sprite.Group = pygame.sprite.Group()
         self.collectible_system = CollectibleSystem(
             rng=self.rng,
             localizer=self.localizer,
@@ -144,7 +143,7 @@ class DemoScene:
             self.boss_gate_x, 0, 48, self.screen.get_height()
         )
 
-    def handle_event(self, event: pygame.event.Event) -> None:
+    def handle_event(self, event: "pygame.event.Event") -> None:
         if self.victory_modal and self.victory_modal.active:
             self.victory_modal.handle_event(event)
             return

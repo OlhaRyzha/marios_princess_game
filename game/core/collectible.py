@@ -19,7 +19,7 @@ def _star_points(radius: float, spikes: int = 5) -> list[tuple[float, float]]:
     return pts
 
 
-def _render_shape(kind: str, size: int) -> pygame.Surface:
+def _render_shape(kind: str, size: int) -> "pygame.Surface":
     surf = pygame.Surface((size, size), pygame.SRCALPHA)
     center = (size / 2, size / 2)
 
@@ -70,7 +70,7 @@ def _render_shape(kind: str, size: int) -> pygame.Surface:
 
 
 @cache
-def collectible_surface(kind: str, size: int) -> pygame.Surface:
+def collectible_surface(kind: str, size: int) -> "pygame.Surface":
     return _render_shape(kind, size)
 
 
@@ -82,7 +82,7 @@ class Collectible(pygame.sprite.Sprite):
         *,
         rng: random.Random,
         size: int = 46,
-        surface: pygame.Surface | None = None,
+        surface: "pygame.Surface | None" = None,
     ):
         super().__init__()
         self.kind = kind
@@ -105,8 +105,8 @@ class Collectible(pygame.sprite.Sprite):
     def icon(
         kind: str,
         size: int = 28,
-        surface: pygame.Surface | None = None,
-    ) -> pygame.Surface:
+        surface: "pygame.Surface | None" = None,
+    ) -> "pygame.Surface":
         if surface is not None:
             return scale_to_height(surface, size)
         return collectible_surface(kind, size).copy()

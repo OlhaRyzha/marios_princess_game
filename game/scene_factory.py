@@ -14,7 +14,7 @@ from game.systems.time_source import TimeSource
 
 @dataclass(slots=True)
 class SceneFactory:
-    screen: pygame.Surface
+    screen: "pygame.Surface"
     time_source: TimeSource
     input_source: InputSource
     rng: random.Random

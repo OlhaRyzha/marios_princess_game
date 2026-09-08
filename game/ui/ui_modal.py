@@ -61,7 +61,7 @@ class VictoryModal:
             wrapped = wrapped[: max_lines - 1] + ["…"]
         return wrapped
 
-    def handle_event(self, e: pygame.event.Event) -> None:
+    def handle_event(self, e: "pygame.event.Event") -> None:
         if not self.active:
             return
         if e.type == pygame.KEYDOWN and e.key in (
@@ -73,7 +73,7 @@ class VictoryModal:
             if self.on_continue:
                 self.on_continue()
 
-    def draw(self, surface: pygame.Surface) -> None:
+    def draw(self, surface: "pygame.Surface") -> None:
         if not self.active:
             return
         dim = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)

@@ -57,6 +57,8 @@ ENV/
 *.log
 coverage/
 htmlcov/
+.playwright-cli/
+output/
 .coverage
 .tox/
 pytestdebug.log

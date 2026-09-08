@@ -39,7 +39,7 @@ def _build_boss_thumbs() -> dict[str, Path | None]:
 
 def run_frame(
     *,
-    clock: pygame.time.Clock,
+    clock: "pygame.time.Clock",
     dt_scale: float,
     menu: StartMenu,
     world_map: WorldMapScene,

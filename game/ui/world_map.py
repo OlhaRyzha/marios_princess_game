@@ -75,7 +75,7 @@ MARIO_FRAME_MS = 140
 MARIO_TARGET_HEIGHT = 120
 
 
-def _load_bg() -> pygame.Surface:
+def _load_bg() -> "pygame.Surface":
     for path in (MAP_IMAGE, FALLBACK_BG):
         if os.path.exists(path):
             img = load_image(path, convert_alpha=False)
@@ -86,7 +86,7 @@ def _load_bg() -> pygame.Surface:
     return surf
 
 
-def _load_image(path: str | Path | None) -> pygame.Surface | None:
+def _load_image(path: str | Path | None) -> "pygame.Surface | None":
     if not path:
         return None
     resolved_path = resolve_project_path(path)
@@ -101,7 +101,7 @@ def _load_image(path: str | Path | None) -> pygame.Surface | None:
 
 def _load_mario_frames(
     target_height: int = MARIO_TARGET_HEIGHT,
-) -> list[pygame.Surface]:
+) -> "list[pygame.Surface]":
     frames: list[pygame.Surface] = []
     if not os.path.isdir(MARIO_DIR):
         return frames
@@ -202,7 +202,7 @@ class WorldMapScene:
     def unlocked(self) -> set[LocationName]:
         return self.state.unlocked
 
-    def _build_bubble_surfaces(self) -> dict[str, pygame.Surface]:
+    def _build_bubble_surfaces(self) -> "dict[str, pygame.Surface]":
         return {
             "idle": make_bubble_surface(
                 NODE_RADIUS, BUBBLE_PALETTES["idle"], brightness=1.0
@@ -226,7 +226,7 @@ class WorldMapScene:
             r.center = (x, y)
             self.node_rects[loc] = r
 
-    def _make_mario_shadow(self) -> pygame.Surface | None:
+    def _make_mario_shadow(self) -> "pygame.Surface | None":
         if not self.mario_frames:
             return None
         width = max(frame.get_width() for frame in self.mario_frames)
@@ -266,7 +266,7 @@ class WorldMapScene:
             return "completed"
         return "idle"
 
-    def handle_event(self, e: pygame.event.Event) -> MapEvent | None:
+    def handle_event(self, e: "pygame.event.Event") -> MapEvent | None:
 
         if e.type == pygame.KEYDOWN:
             if e.key in (pygame.K_LEFT, pygame.K_a):
@@ -299,7 +299,7 @@ class WorldMapScene:
 
         return None
 
-    def _draw_links(self, surface: pygame.Surface) -> None:
+    def _draw_links(self, surface: "pygame.Surface") -> None:
 
         if len(self.locations) < 2:
             return
@@ -317,7 +317,7 @@ class WorldMapScene:
             pygame.draw.aaline(surface, (255, 200, 240), start_point, end_point)
 
     def _draw_node(
-        self, surface: pygame.Surface, loc: LocationName, selected: bool
+        self, surface: "pygame.Surface", loc: LocationName, selected: bool
     ) -> None:
         cx, cy = LOC_POS[loc]
         unlocked = loc in self.unlocked
@@ -384,7 +384,7 @@ class WorldMapScene:
                 badge.get_rect(center=(cx + NODE_RADIUS - 14, cy - NODE_RADIUS + 14)),
             )
 
-    def _draw_mario(self, surface: pygame.Surface) -> None:
+    def _draw_mario(self, surface: "pygame.Surface") -> None:
         if not self.mario_frames or not self.completed:
             return
         pos = self._current_mario_pos()
@@ -400,7 +400,7 @@ class WorldMapScene:
             surface.blit(self._mario_shadow, shadow_rect)
         surface.blit(frame, frame.get_rect(midbottom=(pos[0], draw_y)))
 
-    def draw(self, surface: pygame.Surface, *, overlay: bool) -> None:
+    def draw(self, surface: "pygame.Surface", *, overlay: bool) -> None:
 
         surface.blit(self.bg, (0, 0))
 

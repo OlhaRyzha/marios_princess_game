@@ -14,12 +14,12 @@ class HealthHUD:
 
     def draw(
         self,
-        surface: pygame.Surface,
+        surface: "pygame.Surface",
         health: int,
         max_health: int,
         *,
         collectibles: tuple[int, int] | None = None,
-        icon: pygame.Surface | None = None,
+        icon: "pygame.Surface | None" = None,
     ):
         x = WIDTH - HUD_PADDING - HUD_BAR_WIDTH
         y = HUD_PADDING

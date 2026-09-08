@@ -8,7 +8,7 @@ from game.utils.paths import resolve_project_path
 Anchor = Literal["ground", "air"]
 
 
-def _to_surface(src: str) -> pygame.Surface:
+def _to_surface(src: str) -> "pygame.Surface":
     if isinstance(src, pygame.Surface):
         return src
     if isinstance(src, str):

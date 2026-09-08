@@ -28,7 +28,7 @@ class Princess(pygame.sprite.Sprite):
     def __init__(
         self,
         pos: tuple[int, int],
-        *groups: pygame.sprite.AbstractGroup,
+        *groups: "pygame.sprite.AbstractGroup",
         time_source: TimeSource,
     ) -> None:
         super().__init__(*groups)
@@ -259,5 +259,5 @@ class Princess(pygame.sprite.Sprite):
         self.rect = self.image.get_rect(midbottom=(self.pos.x, self.pos.y))
         self.mask = pygame.mask.from_surface(self.image)
 
-    def draw(self, surface: pygame.Surface, camera_x: float):
+    def draw(self, surface: "pygame.Surface", camera_x: float):
         surface.blit(self.image, self.rect.move(-camera_x, 0))

@@ -18,7 +18,7 @@ class InputState:
 
 
 class InputSource(Protocol):
-    def handle_event(self, event: pygame.event.Event) -> None: ...
+    def handle_event(self, event: "pygame.event.Event") -> None: ...
 
     def read(self) -> InputState: ...
 
@@ -27,7 +27,7 @@ class PygameInputSource:
     def __init__(self) -> None:
         self._pressed_actions: set[int] = set()
 
-    def handle_event(self, event: pygame.event.Event) -> None:
+    def handle_event(self, event: "pygame.event.Event") -> None:
         if event.type == pygame.KEYDOWN:
             self._pressed_actions.add(event.key)
 

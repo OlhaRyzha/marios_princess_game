@@ -58,7 +58,7 @@ class FinaleCinematic:
         if self._hug_img is None:
             self._hug_img = pygame.Surface((256, 256), pygame.SRCALPHA)
 
-    def draw(self, surface: pygame.Surface) -> None:
+    def draw(self, surface: "pygame.Surface") -> None:
         self.ensure_assets()
 
         w, h = surface.get_size()
