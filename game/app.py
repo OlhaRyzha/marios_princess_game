@@ -6,12 +6,13 @@ from pathlib import Path
 
 import pygame
 
+from game.actions import MenuItem
 from game.controller import ControllerEffect, GameController
 from game.core.demo_scene import DemoScene
 from game.data.bosses import BOSS_ROSTER
 from game.data.locations import LocationName
 from game.data.objectives import CONTROLS, OBJECTIVES
-from game.data.start_menu import MAIN_MENU_ITEMS, PAUSE_MENU_ITEMS
+from game.data.start_menu import PAUSE_MENU_ITEMS, main_menu_items
 from game.frame_renderer import FrameRenderer
 from game.i18n import Localizer
 from game.input_adapter import InputAdapter
@@ -48,6 +49,7 @@ def run_frame(
     scene_factory: SceneFactory,
     renderer: FrameRenderer[DemoScene],
     save_progress: Callable[[], None],
+    main_menu_items: tuple[MenuItem, ...],
 ) -> None:
     state = controller.state
 
@@ -77,7 +79,7 @@ def run_frame(
 
     def sync_menu_items() -> None:
         if state.mode is GameMode.MENU:
-            menu.set_items(MAIN_MENU_ITEMS)
+            menu.set_items(main_menu_items)
         elif state.mode is GameMode.MENU_PAUSE:
             menu.set_items(PAUSE_MENU_ITEMS)
 
@@ -148,6 +150,8 @@ class GameRuntime:
         self.controller = GameController(self.state)
 
         self.menu = StartMenu(self.localizer)
+        self.main_menu_items = main_menu_items(is_web=self.is_web)
+        self.menu.set_items(self.main_menu_items)
         self.menu.set_controls(CONTROLS)
         self.world_map = WorldMapScene(
             objectives=OBJECTIVES,
@@ -199,6 +203,7 @@ class GameRuntime:
             scene_factory=self.scene_factory,
             renderer=self.renderer,
             save_progress=self.save_progress,
+            main_menu_items=self.main_menu_items,
         )
 
     def _load_progress(self) -> None:

@@ -1,9 +1,16 @@
 import pygame
 
+from game.actions import MenuAction
 from game.app import GameRuntime
+from game.data.start_menu import main_menu_items
 from game.i18n import Language
 from game.state import GameMode
 from tests.factories.audio import RecordingAudioService
+
+
+def test_web_menu_hides_unsupported_quit_action() -> None:
+    assert MenuAction.QUIT not in {item.action for item in main_menu_items(is_web=True)}
+    assert MenuAction.QUIT in {item.action for item in main_menu_items(is_web=False)}
 
 
 def test_main_menu_starts_game_scene(game_runtime: GameRuntime) -> None:
