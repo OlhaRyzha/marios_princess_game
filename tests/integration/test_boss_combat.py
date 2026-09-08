@@ -6,7 +6,7 @@ from game.app import GameRuntime
 from game.data.bosses import BOSS_ROSTER
 from game.i18n import Localizer
 from game.scene_factory import SceneFactory
-from game.state import GameMode
+from game.state import GameMode, SceneMode
 from game.systems.input_state import InputState
 from game.utils.constants import BOSS_WIDTH
 from tests.factories.audio import RecordingAudioService
@@ -34,7 +34,7 @@ def test_attack_input_shoots_heart_during_boss_fight(
 
     scene.update(1 / 60)
 
-    assert scene.mode == "boss"
+    assert scene.mode is SceneMode.BOSS
     assert len(scene.projectiles) == 1
 
     boss = next(iter(scene.boss_group))

@@ -12,6 +12,13 @@ class GameMode(StrEnum):
     MENU_PAUSE = "menu_pause"
 
 
+class SceneMode(StrEnum):
+    EXPLORE = "explore"
+    BOSS = "boss"
+    FINALE = "finale"
+    VICTORY = "victory"
+
+
 @dataclass(slots=True)
 class Progress:
     unlocked: set[LocationName] = field(default_factory=lambda: {LOCATION_ORDER[0]})

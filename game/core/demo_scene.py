@@ -11,6 +11,7 @@ from game.core.camera import LevelCamera
 from game.core.collectible_system import CollectibleSystem
 from game.core.collision import CollisionSprite, collide_mask
 from game.core.combat import CombatSystem
+from game.core.demo_renderer import DemoRenderer
 from game.core.effects import ConfettiBurst, HitSpark
 from game.core.finale import FinaleCinematic
 from game.core.obstacle_factory import boss_gate_position, build_obstacles
@@ -19,13 +20,13 @@ from game.data.bosses import BOSS_ROSTER, BossConfig
 from game.data.locations import NEXT_LOCATION, LocationName
 from game.i18n import Localizer
 from game.services.audio import AudioService
+from game.state import SceneMode
 from game.systems.input_state import InputSource
 from game.systems.time_source import TimeSource
 from game.ui.boss_preview import BossPreview
 from game.ui.hud import HealthHUD
 from game.ui.ui_modal import VictoryModal
 from game.utils.constants import (
-    BOSS_DIM_COLOR,
     DAMAGE_PER_HIT,
     FONT_SIZE,
     GROUND_Y,
@@ -98,8 +99,14 @@ class DemoScene:
         self.boss_arena = BossArena(WIDTH, LEVEL_WIDTH)
         self.font = load_font(FONT_SIZE)
         self.hud = HealthHUD()
+        self.renderer = DemoRenderer(
+            screen=self.screen,
+            font=self.font,
+            hud=self.hud,
+            localizer=self.localizer,
+        )
 
-        self.mode = "explore"
+        self.mode = SceneMode.EXPLORE
         self.current_boss: BossConfig | None = None
         self._completion_reported = False
         self._on_location_completed = on_location_completed
@@ -152,11 +159,11 @@ class DemoScene:
             self.boss_preview.handle_key(event)
 
     def _update_camera(self):
-        if self.mode != "boss":
+        if self.mode is not SceneMode.BOSS:
             self.camera.follow(self.player.pos.x)
 
     def _keep_boss_fight_visible(self) -> None:
-        if self.mode != "boss":
+        if self.mode is not SceneMode.BOSS:
             return
         boss = next(iter(self.boss_group), None)
         if boss is None:
@@ -217,7 +224,7 @@ class DemoScene:
                 localizer=self.localizer,
             )
             self.victory_modal = modal
-            self.mode = "victory"
+            self.mode = SceneMode.VICTORY
         else:
             self.finale.ensure_assets()
             self.finale.start(self.time_source.now_ms())
@@ -229,10 +236,10 @@ class DemoScene:
                     self.localizer.text("victory.celebrate"),
                 ],
             )
-            self.mode = "finale"
+            self.mode = SceneMode.FINALE
 
     def _start_boss_fight(self, boss: BossConfig) -> None:
-        self.mode = "boss"
+        self.mode = SceneMode.BOSS
         self.audio_service.stop_music()
         self.audio_service.play_music(MUSIC_BOSS, loop=True)
 
@@ -245,7 +252,7 @@ class DemoScene:
         self.combat.start_boss(boss_actor)
 
     def _handle_obstacle_collisions(self):
-        if self.mode != "explore":
+        if self.mode is not SceneMode.EXPLORE:
             return
         hits = [
             obstacle
@@ -260,13 +267,13 @@ class DemoScene:
             self.player.rect.x = int(self.player.pos.x)
 
     def _collect_collectibles(self):
-        if self.mode != "explore":
+        if self.mode is not SceneMode.EXPLORE:
             return
         for position in self.collectible_system.collect(self.player.rect):
             self.fx_group.add(HitSpark(position, time_source=self.time_source))
 
     def _check_boss_gate(self):
-        if self._boss_intro_shown or self.mode != "explore":
+        if self._boss_intro_shown or self.mode is not SceneMode.EXPLORE:
             return
         if self.player.rect.right >= self._boss_trigger_rect.left:
             if not self.collectible_system.complete:
@@ -290,7 +297,7 @@ class DemoScene:
         self._sync_player_rect()
 
         self.camera.reset()
-        self.mode = "explore"
+        self.mode = SceneMode.EXPLORE
         self._boss_intro_shown = False
         self._completion_reported = False
         self.current_boss = None
@@ -316,13 +323,13 @@ class DemoScene:
         if self._collectible_hint_timer > 0.0:
             self._collectible_hint_timer = max(0.0, self._collectible_hint_timer - dt)
 
-        if self.mode == "explore":
+        if self.mode is SceneMode.EXPLORE:
             self._handle_obstacle_collisions()
             self._collect_collectibles()
             self._check_boss_gate()
-        elif self.mode == "boss":
+        elif self.mode is SceneMode.BOSS:
             self.combat.update_boss_phase()
-        elif self.mode == "finale":
+        elif self.mode is SceneMode.FINALE:
             now = self.time_source.now_ms()
             if self.finale.ready_for_modal(now):
                 if self._pending_final_modal and self.victory_modal is None:
@@ -337,101 +344,11 @@ class DemoScene:
                     self.victory_modal = modal
                     self._pending_final_modal = None
                 self.finale.reset()
-                self.mode = "victory"
+                self.mode = SceneMode.VICTORY
 
         if self.player.health <= 0:
             self.player.health = self.player.max_health
             self.switch_location(self.location)
 
-    def _draw_boss_hp(self):
-        boss = next(iter(self.boss_group), None)
-        if not boss:
-            return
-        w, h = 320, 16
-        offset_x = 72
-        x = (self.screen.get_width() - w) // 2 + offset_x
-        y = 64
-        pygame.draw.rect(self.screen, (30, 30, 30), (x, y, w, h), border_radius=6)
-        pygame.draw.rect(self.screen, (220, 220, 220), (x, y, w, h), 2, border_radius=6)
-        ratio = boss.health / boss.max_health if boss.max_health > 0 else 0
-        pygame.draw.rect(
-            self.screen,
-            (220, 70, 70),
-            (x + 2, y + 2, int((w - 4) * ratio), h - 4),
-            border_radius=5,
-        )
-        name_surf = self.font.render(boss.name, True, (240, 240, 240))
-        self.screen.blit(name_surf, (x + (w - name_surf.get_width()) // 2, y + h + 6))
-
-    def draw(self):
-        if self.mode != "finale":
-            self.bg.draw(self.screen, self.camera_x)
-        else:
-            self.finale.draw(self.screen)
-
-        if self.mode == "explore":
-            for sprite in self.obstacles:
-                self.screen.blit(sprite.image, sprite.rect.move(-self.camera_x, 0))
-
-            flag_x = int(self.boss_gate_x - self.camera_x)
-            if 0 <= flag_x <= WIDTH:
-                pole = pygame.Rect(flag_x, int(GROUND_Y - 120), 4, 120)
-                pygame.draw.rect(self.screen, (60, 60, 60), pole)
-                pygame.draw.polygon(
-                    self.screen,
-                    (240, 72, 72),
-                    [
-                        (flag_x + 4, GROUND_Y - 120),
-                        (flag_x + 40, GROUND_Y - 104),
-                        (flag_x + 4, GROUND_Y - 88),
-                    ],
-                )
-
-        if self.mode != "finale":
-            for item in self.collectibles:
-                self.screen.blit(item.image, item.rect.move(-self.camera_x, 0))
-
-        if self.mode == "boss":
-            dim = pygame.Surface((WIDTH, self.screen.get_height()), pygame.SRCALPHA)
-            dim.fill(BOSS_DIM_COLOR)
-            self.screen.blit(dim, (0, 0))
-
-        for pr in self.projectiles:
-            self.screen.blit(pr.image, pr.rect.move(-self.camera_x, 0))
-
-        for b in self.boss_group:
-            b.draw(self.screen, self.camera_x)
-
-        for fx in self.fx_group:
-            fx.draw(self.screen, self.camera_x)
-
-        if self.mode != "finale":
-            self.player.draw(self.screen, self.camera_x)
-            hud_progress = None
-            icon = None
-            if self.collectible_system.goal:
-                hud_progress = self.collectible_system.progress
-                icon = self.collectible_system.icon
-            self.hud.draw(
-                self.screen,
-                self.player.health,
-                self.player.max_health,
-                collectibles=hud_progress,
-                icon=icon,
-            )
-            if self.mode == "boss":
-                self._draw_boss_hp()
-            tip = self.font.render(
-                self.localizer.text("game.help"), True, (230, 230, 230)
-            )
-            self.screen.blit(tip, (16, 12))
-            if self._collectible_hint_timer > 0.0 and self._collectible_hint_text:
-                hint = self.font.render(
-                    self._collectible_hint_text, True, (255, 236, 210)
-                )
-                self.screen.blit(hint, (WIDTH // 2 - hint.get_width() // 2, 70))
-
-        if self.victory_modal and self.victory_modal.active:
-            self.victory_modal.draw(self.screen)
-        elif self.boss_preview and not self.boss_preview.is_done():
-            self.boss_preview.draw(self.screen)
+    def draw(self) -> None:
+        self.renderer.draw(self)

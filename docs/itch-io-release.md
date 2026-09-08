@@ -29,7 +29,8 @@ The itch.io archive is created at `build/web.zip`. To test it locally, run:
 make web-serve
 ```
 
-Open the URL printed by Pygbag, usually `http://localhost:8000`.
+Open `http://localhost:8000`. The command serves the same verified archive that
+will be uploaded to itch.io.
 
 ## Publish
 

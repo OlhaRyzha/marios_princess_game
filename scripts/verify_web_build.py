@@ -14,6 +14,11 @@ def verify_web_build(archive_path: Path) -> None:
     try:
         with ZipFile(archive_path) as archive:
             names = set(archive.namelist())
+            index_html = (
+                archive.read("index.html").decode("utf-8")
+                if "index.html" in names
+                else ""
+            )
     except BadZipFile as error:
         raise ValueError(f"Invalid web archive: {archive_path}") from error
 
@@ -22,6 +27,8 @@ def verify_web_build(archive_path: Path) -> None:
     if missing_files:
         missing = ", ".join(sorted(missing_files))
         raise ValueError(f"Web archive is missing required files: {missing}")
+    if "http://localhost" in index_html:
+        raise ValueError("Web archive contains a localhost runtime URL")
 
 
 if __name__ == "__main__":
