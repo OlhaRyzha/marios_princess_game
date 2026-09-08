@@ -109,11 +109,10 @@ make web-publish
 See [docs/itch-io-release.md](docs/itch-io-release.md) for the complete release
 checklist and troubleshooting steps.
 
-Versioning and GitHub releases are automated with Release Please. Commits named
-`fix: ...` create a patch release proposal, `feat: ...` creates a minor release
-proposal, and a commit with `BREAKING CHANGE:` creates a major one. Merging the
-generated release PR updates `pyproject.toml`, creates a `vX.Y.Z` Git tag and a
-GitHub Release, then attaches the verified `web.zip` build.
+Versioning and GitHub releases are automated by the **Release** workflow. Run it
+from GitHub Actions and choose `patch`, `minor`, or `major`. It verifies the
+project, updates `pyproject.toml`, creates a `vX.Y.Z` Git tag and GitHub Release,
+then attaches the verified `web.zip` build.
 
 Progress is saved automatically in browser storage or in
 `~/.marios_princess_game/progress.json` for the desktop version.

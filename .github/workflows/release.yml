@@ -1,43 +1,61 @@
 name: Release
 
 on:
-  push:
-    branches: [development]
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: Semantic version part to increment
+        required: true
+        default: patch
+        type: choice
+        options: [patch, minor, major]
 
 permissions:
   contents: write
-  issues: write
-  pull-requests: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
 
 jobs:
   release:
     runs-on: ubuntu-latest
     steps:
-      - id: release
-        uses: googleapis/release-please-action@v4
+      - uses: actions/checkout@v4
         with:
-          target-branch: development
-          config-file: release-please-config.json
-          manifest-file: .release-please-manifest.json
+          ref: development
+          fetch-depth: 0
 
-      - if: ${{ steps.release.outputs.release_created }}
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ steps.release.outputs.tag_name }}
-
-      - if: ${{ steps.release.outputs.release_created }}
-        uses: astral-sh/setup-uv@v6
+      - uses: astral-sh/setup-uv@v6
         with:
           enable-cache: true
 
-      - if: ${{ steps.release.outputs.release_created }}
-        run: uv sync --locked --dev
-
-      - if: ${{ steps.release.outputs.release_created }}
-        run: make web-check
-
-      - if: ${{ steps.release.outputs.release_created }}
+      - run: uv sync --locked --dev
+      - id: version
         env:
+          BUMP: ${{ inputs.bump }}
+        run: |
+          version=$(uv run python scripts/bump_version.py "$BUMP")
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - run: make check
+      - run: make coverage
+      - run: make web-check
+
+      - env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add pyproject.toml
+          git commit -m "chore: release v$VERSION"
+          git tag -a "v$VERSION" -m "Release v$VERSION"
+          git push origin development "v$VERSION"
+
+      - env:
           GH_TOKEN: ${{ github.token }}
-          RELEASE_TAG: ${{ steps.release.outputs.tag_name }}
-        run: gh release upload "$RELEASE_TAG" build/web.zip --clobber
+          VERSION: ${{ steps.version.outputs.version }}
+        run: >-
+          gh release create "v$VERSION" build/web.zip
+          --title "Mario's Princess v$VERSION"
+          --generate-notes

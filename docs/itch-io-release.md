@@ -58,14 +58,11 @@ butler status olharyzha/marios-princess:html5
 
 ## Version and GitHub release
 
-Release Please watches `development` and prepares a release PR from Conventional
-Commits. Use `fix: ...` for patches, `feat: ...` for features, and add
-`BREAKING CHANGE:` to the commit body for a major release. When that PR is
-merged, GitHub automatically updates the project version, creates the matching
-`vX.Y.Z` tag and GitHub Release, and attaches the verified browser build.
-
-The release PR is the single place where the next version is reviewed. Do not
-edit `pyproject.toml` or create version tags by hand.
+Open **GitHub → Actions → Release → Run workflow**, choose `patch`, `minor`, or
+`major`, and run it on `development`. The workflow runs all checks, updates the
+version in `pyproject.toml`, creates the matching `vX.Y.Z` tag and GitHub Release,
+and attaches the verified browser build. Do not edit the version or create tags
+by hand.
 
 ## Troubleshooting
 

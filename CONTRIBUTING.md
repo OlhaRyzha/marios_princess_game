@@ -50,7 +50,7 @@ For gameplay or rendering changes, verify this short path after automated checks
 
 # Commit messages
 
-Use Conventional Commits so automated versioning can classify each change:
+Use Conventional Commits to keep generated GitHub release notes clear:
 
 - `fix: restore boss collision` for a patch release;
 - `feat: add language selector` for a minor release;
