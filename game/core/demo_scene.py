@@ -53,7 +53,6 @@ class DemoScene:
         self.audio_service = audio_service
         self.localizer = localizer or Localizer()
         self.bg = ParallaxBackground(location)
-
         self.level = DemoLevel(
             screen_height=self.screen.get_height(),
             location=location,
@@ -61,6 +60,16 @@ class DemoScene:
             rng=self.rng,
             localizer=self.localizer,
         )
+        self._bind_level_components()
+        self._create_gameplay_services(location)
+        self._create_ui()
+        self._create_progression(on_location_completed, on_game_finished)
+        self._reset_transient_state()
+        self.audio_service.stop_music()
+        self.audio_service.play_music(MUSIC_LEVEL, loop=True)
+
+    def _bind_level_components(self) -> None:
+        """Expose the active level components used by scene collaborators."""
         self.player = self.level.player
         self.all_sprites = self.level.all_sprites
         self.obstacles = self.level.obstacles
@@ -70,6 +79,8 @@ class DemoScene:
         self.collectible_system = self.level.collectible_system
         self.collectibles = self.collectible_system.sprites
 
+    def _create_gameplay_services(self, location: LocationName) -> None:
+        """Create combat and camera services for the active level."""
         self.combat = CombatSystem(
             self.player,
             self.boss_group,
@@ -78,12 +89,13 @@ class DemoScene:
             time_source=self.time_source,
             on_boss_defeated=self._on_boss_victory,
         )
-
         self.location: LocationName = location
         self.boss_gate_x = self.level.boss_gate_x
-
         self.camera = LevelCamera(WIDTH, LEVEL_WIDTH)
         self.boss_arena = BossArena(WIDTH, LEVEL_WIDTH)
+
+    def _create_ui(self) -> None:
+        """Create scene presentation components."""
         self.font = load_font(FONT_SIZE)
         self.hud = HealthHUD()
         self.renderer = DemoRenderer(
@@ -93,6 +105,12 @@ class DemoScene:
             localizer=self.localizer,
         )
 
+    def _create_progression(
+        self,
+        on_location_completed: Callable[[LocationName], None] | None,
+        on_game_finished: Callable[[], None] | None,
+    ) -> None:
+        """Create progression callbacks and the boss selection UI."""
         self.mode = SceneMode.EXPLORE
         self.current_boss: BossConfig | None = None
         self.progression = DemoProgression(
@@ -109,15 +127,14 @@ class DemoScene:
             localizer=self.localizer,
             on_select=self._on_boss_selected,
         )
-        self._boss_intro_shown = False
 
+    def _reset_transient_state(self) -> None:
+        """Reset overlays and short-lived scene feedback."""
+        self._boss_intro_shown = False
         self.victory_modal: VictoryModal | None = None
         self.finale = self.progression.finale
         self._collectible_hint_timer: float = 0.0
         self._collectible_hint_text: str = ""
-
-        self.audio_service.stop_music()
-        self.audio_service.play_music(MUSIC_LEVEL, loop=True)
 
     def handle_event(self, event: "pygame.event.Event") -> None:
         if self.victory_modal and self.victory_modal.active:

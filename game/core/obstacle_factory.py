@@ -125,6 +125,74 @@ def _blocks_for_location(location: LocationName):
     return CAVES_BLOCKS, CAVES_PATTERN
 
 
+def _resolve_anchor(anchor_name: str, air_offset: int | str) -> tuple[Anchor, int]:
+    if anchor_name != "air":
+        return "ground", 0
+    offset = crawl_gap() if air_offset == "crawl" else int(air_offset)
+    return "air", offset
+
+
+def _movement_parameters(
+    config: dict[str, float | tuple[float, float] | str], rng: random.Random
+) -> tuple[str, float, float, float]:
+    origin = str(config.get("origin", "center"))
+    travel_default = 190.0 if origin in ("bottom", "top") else 90.0
+    travel = _rand_from_range(config.get("travel"), default=travel_default, rng=rng)
+    amplitude = (
+        travel
+        if origin in ("bottom", "top")
+        else _rand_from_range(config.get("amplitude"), default=travel, rng=rng)
+    )
+    speed = _rand_from_range(config.get("speed"), default=1.0, rng=rng)
+    phase_config = config.get("phase")
+    if phase_config is not None:
+        phase = _rand_from_range(phase_config, default=0.0, rng=rng)
+    elif origin == "bottom":
+        phase = -math.pi * 0.5
+    elif origin == "top":
+        phase = math.pi * 0.5
+    else:
+        phase = rng.uniform(0.0, math.tau)
+    return origin, amplitude, speed, phase
+
+
+def _build_obstacle(
+    *,
+    key: str,
+    image_def: str,
+    x: int,
+    anchor: Anchor,
+    air_offset: int,
+    scale: float,
+    rng: random.Random,
+) -> Obstacle:
+    movement = MOVING_BLOCK_BEHAVIOUR.get(key.lower())
+    if movement is None:
+        return Obstacle(
+            image_def=image_def,
+            pos=(x, 0),
+            scale=scale,
+            anchor=anchor,
+            air_bottom_offset=air_offset,
+        )
+    origin, amplitude, speed, phase = _movement_parameters(movement, rng)
+    return cast(
+        Obstacle,
+        MovingObstacle(
+            image_def=image_def,
+            pos=(x, 0),
+            scale=scale,
+            anchor=anchor,
+            air_bottom_offset=air_offset,
+            amplitude=amplitude,
+            speed=speed,
+            phase=phase,
+            move_axis="y",
+            origin=origin,
+        ),
+    )
+
+
 def build_obstacles(
     *,
     location: LocationName,
@@ -135,7 +203,6 @@ def build_obstacles(
     scale: float = OBSTACLE_SCALE,
     rng: random.Random,
 ) -> tuple[list[Obstacle], int]:
-
     obstacles: list[Obstacle] = []
     blocks, pattern = _blocks_for_location(location)
 
@@ -143,72 +210,19 @@ def build_obstacles(
     max_right = x
 
     for _ in range(repeats):
-        for key, anchor_name, air_offs in pattern:
+        for key, anchor_name, air_offset in pattern:
             if key not in blocks:
                 continue
-
-            image_def = blocks[key]
-            pos = (x, 0)
-
-            anchor: Anchor = "ground"
-            if anchor_name == "air":
-                anchor = "air"
-            offs = 0
-            if anchor == "air":
-                offs = crawl_gap() if air_offs == "crawl" else int(air_offs)
-
-            moving_cfg = MOVING_BLOCK_BEHAVIOUR.get(key.lower())
-            if moving_cfg:
-                origin = str(moving_cfg.get("origin", "center"))
-                travel_default = 190.0 if origin in ("bottom", "top") else 90.0
-                travel_value = _rand_from_range(
-                    moving_cfg.get("travel"), default=travel_default, rng=rng
-                )
-                amplitude = (
-                    travel_value
-                    if origin in ("bottom", "top")
-                    else _rand_from_range(
-                        moving_cfg.get("amplitude"), default=travel_value, rng=rng
-                    )
-                )
-                speed = _rand_from_range(moving_cfg.get("speed"), default=1.0, rng=rng)
-                phase_cfg = moving_cfg.get("phase") if "phase" in moving_cfg else None
-                if phase_cfg is None:
-                    if origin == "bottom":
-                        phase = -math.pi * 0.5
-                    elif origin == "top":
-                        phase = math.pi * 0.5
-                    else:
-                        phase = rng.uniform(
-                            0.0, math.tau if hasattr(math, "tau") else 2.0 * math.pi
-                        )
-                else:
-                    phase = _rand_from_range(phase_cfg, default=0.0, rng=rng)
-
-                obstacle = cast(
-                    Obstacle,
-                    MovingObstacle(
-                        image_def=image_def,
-                        pos=pos,
-                        scale=scale,
-                        anchor=anchor,
-                        air_bottom_offset=offs,
-                        amplitude=amplitude,
-                        speed=speed,
-                        phase=phase,
-                        move_axis="y",
-                        origin=origin,
-                    ),
-                )
-            else:
-                obstacle = Obstacle(
-                    image_def=image_def,
-                    pos=pos,
-                    scale=scale,
-                    anchor=anchor,
-                    air_bottom_offset=offs,
-                )
-
+            anchor, resolved_offset = _resolve_anchor(anchor_name, air_offset)
+            obstacle = _build_obstacle(
+                key=key,
+                image_def=blocks[key],
+                x=x,
+                anchor=anchor,
+                air_offset=resolved_offset,
+                scale=scale,
+                rng=rng,
+            )
             obstacles.append(obstacle)
             x += step_x
             max_right = max(max_right, obstacle.rect.right)

@@ -134,12 +134,24 @@ class WorldMapScene:
         self.rng = rng
         self.localizer = localizer or Localizer()
         self.bg = _load_bg()
+        self._load_fonts()
+        self._load_map_content(objectives, boss_thumbs)
+        self._create_state(unlocked, completed)
+        self._create_visuals()
 
+    def _load_fonts(self) -> None:
+        """Load fonts used by the map and objective card."""
         self.font_title = load_font(int(FONT_SIZE * 2.0))
         self.font_label = load_font(int(FONT_SIZE * 0.95))
         self.font_hint = load_font(int(FONT_SIZE * 0.9))
         self.font_card = load_font(int(FONT_SIZE * 0.8))
 
+    def _load_map_content(
+        self,
+        objectives: Mapping[LocationName, ObjectiveConfig] | None,
+        boss_thumbs: Mapping[str, str | Path | None] | None,
+    ) -> None:
+        """Load objective data, boss thumbnails, and Mario frames."""
         self.mario_frames: list[pygame.Surface] = _load_mario_frames()
         self._mario_frame_ms: int = MARIO_FRAME_MS
         self._mario_shadow: pygame.Surface | None = self._make_mario_shadow()
@@ -161,6 +173,12 @@ class WorldMapScene:
             loc: _load_image(self.boss_thumbs_paths.get(loc)) for loc, _ in LOCATIONS
         }
 
+    def _create_state(
+        self,
+        unlocked: Iterable[LocationName] | None,
+        completed: Iterable[LocationName] | None,
+    ) -> None:
+        """Create navigation and progress state."""
         locations: list[LocationName] = [loc for loc, _ in LOCATIONS]
         self.loc_titles: dict[LocationName, str] = {
             loc: title for loc, title in LOCATIONS
@@ -174,6 +192,8 @@ class WorldMapScene:
         self.node_rects: dict[LocationName, pygame.Rect] = {}
         self._rebuild_node_rects()
 
+    def _create_visuals(self) -> None:
+        """Create cached map effects and the renderer."""
         self._bubble_surfaces: dict[str, pygame.Surface] = self._build_bubble_surfaces()
         self.fog = MapFog(
             locations=self.locations,

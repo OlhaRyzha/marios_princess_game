@@ -77,7 +77,14 @@ class BossPreview:
         if not self.active or not self._items:
             return
         data = self._items[self._idx]
+        card, inner = self._draw_card(surface)
+        text_area = pygame.Rect(inner.x, inner.y, int(inner.w * 0.56), inner.h)
+        self._draw_description(surface, data, text_area)
+        self._draw_navigation(surface, card, inner, text_area)
+        self._draw_boss_image(surface, data, inner, text_area)
 
+    def _draw_card(self, surface: pygame.Surface) -> tuple[pygame.Rect, pygame.Rect]:
+        """Draw the modal backdrop and return its content rectangles."""
         dark = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
         dark.fill((10, 18, 26, 180))
         surface.blit(dark, (0, 0))
@@ -87,12 +94,12 @@ class BossPreview:
         )
         pygame.draw.rect(surface, (235, 238, 245), card, border_radius=16)
         pygame.draw.rect(surface, (40, 60, 85), card, width=3, border_radius=16)
+        return card, card.inflate(-PADDING * 2, -PADDING * 2)
 
-        inner = card.inflate(-PADDING * 2, -PADDING * 2)
-
-        left_w = int(inner.w * 0.56)
-        text_area = pygame.Rect(inner.x, inner.y, left_w, inner.h)
-
+    def _draw_description(
+        self, surface: pygame.Surface, data: BossConfig, text_area: pygame.Rect
+    ) -> None:
+        """Draw the boss title and localized strategy sections."""
         title = self.title_font.render(data.name, True, (30, 40, 60))
         surface.blit(title, (text_area.x, text_area.y))
 
@@ -114,6 +121,14 @@ class BossPreview:
                 y += ln.get_height() + 2
             y += 8
 
+    def _draw_navigation(
+        self,
+        surface: pygame.Surface,
+        card: pygame.Rect,
+        inner: pygame.Rect,
+        text_area: pygame.Rect,
+    ) -> None:
+        """Draw keyboard help and the current page number."""
         hint = self.small.render(
             self.localizer.text("boss.hint"),
             True,
@@ -128,8 +143,16 @@ class BossPreview:
             (card.right - page.get_width() - 10, card.bottom - page.get_height() - 8),
         )
 
+    def _draw_boss_image(
+        self,
+        surface: pygame.Surface,
+        data: BossConfig,
+        inner: pygame.Rect,
+        text_area: pygame.Rect,
+    ) -> None:
+        """Load, cache, and draw the selected boss image."""
         img_area = pygame.Rect(
-            text_area.right + 18, inner.y, inner.w - left_w - 18, inner.h
+            text_area.right + 18, inner.y, inner.right - text_area.right - 18, inner.h
         )
         path = data.image_path
         img = self._img_cache.get(path)

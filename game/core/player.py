@@ -33,8 +33,21 @@ class Princess(pygame.sprite.Sprite):
     ) -> None:
         super().__init__(*groups)
         self.time_source = time_source
+        self.anims = self._create_animations()
+        self.anims["crouch"] = self._build_crouch_from_fall()
+        self.anims["crawl"] = self._build_crawl_from_fall()
+        self._initialize_motion(pos)
+        self._initialize_sprite()
+        self.max_health = MAX_HEALTH
+        self.health = MAX_HEALTH
+        self._last_hit_ms = -10_000
+        self._last_dir_input = 0
+        self._last_dir_time_ms = -10_000
 
-        self.anims: dict[str, Animation] = {
+    @staticmethod
+    def _create_animations() -> dict[str, Animation]:
+        """Load the princess animation set."""
+        animations = {
             "idle": Animation(
                 load_sequence("idle", "princess_idle_", TARGET_H), fps=6, loop=True
             ),
@@ -67,9 +80,10 @@ class Princess(pygame.sprite.Sprite):
                 loop=True,
             ),
         }
-        self.anims["crouch"] = self._build_crouch_from_fall()
-        self.anims["crawl"] = self._build_crawl_from_fall()
+        return animations
 
+    def _initialize_motion(self, pos: tuple[int, int]) -> None:
+        """Initialize movement and animation state."""
         self.state = "idle"
         self.dir = 1
         self.pos = pygame.Vector2(pos)
@@ -78,16 +92,11 @@ class Princess(pygame.sprite.Sprite):
         self.state_timer = 0.0
         self.crouched = False
 
+    def _initialize_sprite(self) -> None:
+        """Create the initial image, rectangle, and collision mask."""
         self.image: pygame.Surface = self.anims["idle"].image()
         self.rect: pygame.Rect = self.image.get_rect(midbottom=(self.pos.x, self.pos.y))
         self.mask: pygame.mask.Mask = pygame.mask.from_surface(self.image)
-
-        self.max_health = MAX_HEALTH
-        self.health = MAX_HEALTH
-        self._last_hit_ms = -10_000
-
-        self._last_dir_input = 0
-        self._last_dir_time_ms = -10_000
 
     def _build_crouch_from_fall(self) -> Animation:
         frames = load_sequence("fall", "princess_fall_", TARGET_H)
@@ -146,31 +155,35 @@ class Princess(pygame.sprite.Sprite):
         return 0
 
     def _handle_input(self, input_state: InputState) -> None:
-        moving = False
         running = input_state.run
         speed = SPEED_RUN if running else SPEED_WALK
-
         self.crouched = input_state.down
         if self.crouched:
-            speed = speed * CRAWL_SPEED
-
+            speed *= CRAWL_SPEED
         left = input_state.left
         right = input_state.right
+        moving = self._apply_horizontal_input(left, right, speed)
+        self._apply_action_input(input_state)
+        self._try_jump(input_state.jump, left, right)
+        self._update_ground_animation(moving, running)
+        self._update_air_movement(left, right)
 
+    def _apply_horizontal_input(self, left: bool, right: bool, speed: float) -> bool:
         if left:
             self.vel.x = -speed if self.on_ground else self.vel.x
             self.dir = -1
-            moving = True
             self._remember_dir(-1)
+            return True
         elif right:
             self.vel.x = speed if self.on_ground else self.vel.x
             self.dir = 1
-            moving = True
             self._remember_dir(1)
-        else:
-            if self.on_ground:
-                self.vel.x = 0
+            return True
+        if self.on_ground:
+            self.vel.x = 0
+        return False
 
+    def _apply_action_input(self, input_state: InputState) -> None:
         if input_state.attack:
             self.set_state("attack", timer=0.35)
         elif input_state.celebrate:
@@ -180,13 +193,15 @@ class Princess(pygame.sprite.Sprite):
         elif input_state.cry:
             self.set_state("cry", timer=0.5)
 
-        if input_state.jump and self.on_ground and not self.crouched:
+    def _try_jump(self, jump: bool, left: bool, right: bool) -> None:
+        if jump and self.on_ground and not self.crouched:
             self.vel.y = JUMP_V
             if not (left or right):
                 self.vel.x = 0
             self.on_ground = False
             self.set_state("jump")
 
+    def _update_ground_animation(self, moving: bool, running: bool) -> None:
         if self.on_ground and self.state not in ("attack", "hurt", "cry"):
             if self.crouched:
                 self.set_state("crawl" if moving else "crouch")
@@ -195,6 +210,7 @@ class Princess(pygame.sprite.Sprite):
                     "run" if (moving and running) else "walk" if moving else "idle"
                 )
 
+    def _update_air_movement(self, left: bool, right: bool) -> None:
         if not self.on_ground and not self.crouched:
             if left and not right:
                 self.vel.x -= AIR_ACCEL

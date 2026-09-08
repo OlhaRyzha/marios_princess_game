@@ -38,6 +38,81 @@ def _build_boss_thumbs() -> dict[str, Path | None]:
     return thumbs
 
 
+def _sync_world_map(world_map: WorldMapScene, state: GameState[DemoScene]) -> None:
+    world_map.set_progress(
+        unlocked=state.progress.unlocked,
+        completed=state.progress.completed,
+    )
+
+
+def _load_pending_scene(
+    *,
+    state: GameState[DemoScene],
+    controller: GameController[DemoScene],
+    world_map: WorldMapScene,
+    scene_factory: SceneFactory,
+    save_progress: Callable[[], None],
+) -> None:
+    if not state.scene_load_pending:
+        return
+
+    def handle_location_completed(location: LocationName) -> None:
+        controller.complete_location(location)
+        _sync_world_map(world_map, state)
+        save_progress()
+
+    def handle_game_finished() -> None:
+        controller.finish_game()
+        _sync_world_map(world_map, state)
+        save_progress()
+
+    state.scene = scene_factory.create_game_scene(
+        state.progress.pending_location,
+        on_location_completed=handle_location_completed,
+        on_game_finished=handle_game_finished,
+    )
+    state.scene_load_pending = False
+
+
+def _apply_effect(
+    effect: ControllerEffect | None, state: GameState[DemoScene], menu: StartMenu
+) -> None:
+    if effect is ControllerEffect.START_SCENE:
+        state.scene_load_pending = True
+    elif effect is ControllerEffect.OPEN_CONTROLS:
+        menu.open_controls()
+
+
+def _sync_menu(
+    state: GameState[DemoScene],
+    menu: StartMenu,
+    items: tuple[MenuItem, ...],
+) -> None:
+    if state.mode is GameMode.MENU:
+        menu.set_items(items)
+    elif state.mode is GameMode.MENU_PAUSE:
+        menu.set_items(PAUSE_MENU_ITEMS)
+
+
+def _update_gameplay(state: GameState[DemoScene], dt: float) -> None:
+    if state.mode is not GameMode.GAME:
+        state.time_accumulator = 0.0
+        return
+    if state.scene is None:
+        state.time_accumulator = 0.0
+        return
+
+    active_scene = state.scene
+    fixed_step = 1.0 / FPS
+    accumulator = state.time_accumulator + dt
+    while accumulator >= fixed_step:
+        active_scene.update(fixed_step)
+        accumulator -= fixed_step
+    state.time_accumulator = accumulator
+    if state.scene is active_scene:
+        state.progress.pending_location = active_scene.location
+
+
 def run_frame(
     *,
     clock: "pygame.time.Clock",
@@ -52,71 +127,20 @@ def run_frame(
     main_menu_items: tuple[MenuItem, ...],
 ) -> None:
     state = controller.state
-
-    def update_world_map_progress() -> None:
-        world_map.set_progress(
-            unlocked=state.progress.unlocked,
-            completed=state.progress.completed,
-        )
-
-    def handle_location_completed(loc: LocationName) -> None:
-        controller.complete_location(loc)
-        update_world_map_progress()
-        save_progress()
-
-    def handle_game_finished() -> None:
-        controller.finish_game()
-        update_world_map_progress()
-        save_progress()
-
-    def start_scene() -> None:
-        state.scene = scene_factory.create_game_scene(
-            state.progress.pending_location,
-            on_location_completed=handle_location_completed,
-            on_game_finished=handle_game_finished,
-        )
-
-    def apply_effect(effect: ControllerEffect | None) -> None:
-        if effect is ControllerEffect.START_SCENE:
-            state.scene_load_pending = True
-        elif effect is ControllerEffect.OPEN_CONTROLS:
-            menu.open_controls()
-
-    def sync_menu_items() -> None:
-        if state.mode is GameMode.MENU:
-            menu.set_items(main_menu_items)
-        elif state.mode is GameMode.MENU_PAUSE:
-            menu.set_items(PAUSE_MENU_ITEMS)
-
-    if state.scene_load_pending:
-        start_scene()
-        state.scene_load_pending = False
-
+    _load_pending_scene(
+        state=state,
+        controller=controller,
+        world_map=world_map,
+        scene_factory=scene_factory,
+        save_progress=save_progress,
+    )
     dt = clock.tick(FPS) / dt_scale
     dt = min(dt, 0.1)
-    sync_menu_items()
-
-    for e in pygame.event.get():
-        apply_effect(input_adapter.route(e))
-
-    sync_menu_items()
-
-    if state.mode is GameMode.GAME:
-        if state.scene is not None:
-            active_scene = state.scene
-            fixed_step = 1.0 / FPS
-            accumulator = state.time_accumulator + dt
-            while accumulator >= fixed_step:
-                active_scene.update(fixed_step)
-                accumulator -= fixed_step
-            state.time_accumulator = accumulator
-            if state.scene is active_scene:
-                state.progress.pending_location = active_scene.location
-        else:
-            state.time_accumulator = 0.0
-    else:
-        state.time_accumulator = 0.0
-
+    _sync_menu(state, menu, main_menu_items)
+    for event in pygame.event.get():
+        _apply_effect(input_adapter.route(event), state, menu)
+    _sync_menu(state, menu, main_menu_items)
+    _update_gameplay(state, dt)
     if state.scene_load_pending:
         renderer.draw_loading()
     else:
@@ -131,15 +155,27 @@ class GameRuntime:
         progress_store: ProgressStore | None = None,
     ) -> None:
         self.is_web = is_web
+        self._initialize_pygame()
+        self._create_services(progress_store)
+        self._create_navigation()
+        self._create_adapters()
+
+    def _initialize_pygame(self) -> None:
+        """Initialize the display and frame clock."""
         pygame.init()
         self.screen = pygame.display.set_mode((WIDTH, HEIGHT))
         pygame.display.set_caption(TITLE)
         self.clock = pygame.time.Clock()
+
+    def _create_services(self, progress_store: ProgressStore | None) -> None:
+        """Create runtime services and restore saved progress."""
         self.time_source = PygameTimeSource()
         self.input_source = PygameInputSource()
         self.rng = random.Random()
         self.audio_service = PygameAudioService()
-        self.progress_store = progress_store or create_progress_store(is_web=is_web)
+        self.progress_store = progress_store or create_progress_store(
+            is_web=self.is_web
+        )
         self.localizer = Localizer()
         self.scene_factory = SceneFactory(
             screen=self.screen,
@@ -154,6 +190,8 @@ class GameRuntime:
         self._load_progress()
         self.controller = GameController(self.state)
 
+    def _create_navigation(self) -> None:
+        """Create the main menu and world map."""
         self.menu = StartMenu(self.localizer)
         self.main_menu_items = main_menu_items(is_web=self.is_web)
         self.menu.set_items(self.main_menu_items)
@@ -172,6 +210,9 @@ class GameRuntime:
             unlocked=self.state.progress.unlocked,
             completed=self.state.progress.completed,
         )
+
+    def _create_adapters(self) -> None:
+        """Connect input routing and frame rendering."""
         self.input_adapter = InputAdapter(
             controller=self.controller,
             menu=self.menu,

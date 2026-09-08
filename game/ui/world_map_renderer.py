@@ -89,56 +89,84 @@ class WorldMapRenderer:
         center_x, center_y = self.positions[location]
         unlocked = location in scene.unlocked
         completed = location in scene.completed
-        if selected:
-            halo = pygame.Surface(
-                (self.node_radius * 4, self.node_radius * 4), pygame.SRCALPHA
-            )
-            halo_color = (255, 220, 250, 90) if unlocked else (200, 210, 230, 70)
-            pygame.draw.circle(
-                halo,
-                halo_color,
-                (halo.get_width() // 2, halo.get_height() // 2),
-                self.node_radius + self.node_halo,
-            )
-            surface.blit(
-                halo,
-                (center_x - halo.get_width() // 2, center_y - halo.get_height() // 2),
-            )
-
+        center = (center_x, center_y)
+        self._draw_selection_halo(surface, center, selected, unlocked)
         state = self._bubble_state(scene, location, selected)
         bubble = scene._bubble_surfaces[state]
-        surface.blit(bubble, bubble.get_rect(center=(center_x, center_y)))
+        surface.blit(bubble, bubble.get_rect(center=center))
         intensity = self.fog_intensity.get(state, 0.75)
         if selected and state != "locked":
             intensity += 0.1
-        scene.fog.draw(surface, location, (center_x, center_y), intensity)
-        pygame.draw.circle(
-            surface, (255, 255, 255), (center_x, center_y), self.node_radius, 4
+        scene.fog.draw(surface, location, center, intensity)
+        self._draw_node_border(surface, center)
+        self._draw_boss_icon(surface, scene, location, center, selected)
+        if not unlocked:
+            self._draw_locked_overlay(surface, center)
+        self._draw_label(surface, scene, location, center, unlocked)
+        if completed:
+            self._draw_completion_badge(surface, center)
+
+    def _draw_selection_halo(
+        self,
+        surface: pygame.Surface,
+        center: tuple[int, int],
+        selected: bool,
+        unlocked: bool,
+    ) -> None:
+        if not selected:
+            return
+        halo = pygame.Surface(
+            (self.node_radius * 4, self.node_radius * 4), pygame.SRCALPHA
         )
+        color = (255, 220, 250, 90) if unlocked else (200, 210, 230, 70)
         pygame.draw.circle(
-            surface,
-            (255, 245, 252),
-            (center_x, center_y),
-            self.node_radius - 3,
-            2,
+            halo,
+            color,
+            (halo.get_width() // 2, halo.get_height() // 2),
+            self.node_radius + self.node_halo,
         )
+        surface.blit(halo, halo.get_rect(center=center))
+
+    def _draw_node_border(
+        self, surface: pygame.Surface, center: tuple[int, int]
+    ) -> None:
+        pygame.draw.circle(surface, (255, 255, 255), center, self.node_radius, 4)
+        pygame.draw.circle(surface, (255, 245, 252), center, self.node_radius - 3, 2)
+
+    def _draw_boss_icon(
+        self,
+        surface: pygame.Surface,
+        scene: WorldMapView,
+        location: LocationName,
+        center: tuple[int, int],
+        selected: bool,
+    ) -> None:
         image = scene.boss_thumbs_img.get(location)
         if selected and image:
             icon = circle_image(image, self.boss_thumb_radius)
-            surface.blit(
-                icon,
-                (center_x - icon.get_width() // 2, center_y - icon.get_height() // 2),
-            )
-        if not unlocked:
-            diameter = self.node_radius * 2
-            mask = pygame.Surface((diameter, diameter), pygame.SRCALPHA)
-            pygame.draw.circle(
-                mask,
-                (25, 25, 35, 150),
-                (self.node_radius, self.node_radius),
-                self.node_radius,
-            )
-            surface.blit(mask, mask.get_rect(center=(center_x, center_y)))
+            surface.blit(icon, icon.get_rect(center=center))
+
+    def _draw_locked_overlay(
+        self, surface: pygame.Surface, center: tuple[int, int]
+    ) -> None:
+        diameter = self.node_radius * 2
+        mask = pygame.Surface((diameter, diameter), pygame.SRCALPHA)
+        pygame.draw.circle(
+            mask,
+            (25, 25, 35, 150),
+            (self.node_radius, self.node_radius),
+            self.node_radius,
+        )
+        surface.blit(mask, mask.get_rect(center=center))
+
+    def _draw_label(
+        self,
+        surface: pygame.Surface,
+        scene: WorldMapView,
+        location: LocationName,
+        center: tuple[int, int],
+        unlocked: bool,
+    ) -> None:
         label = scene.font_label.render(
             scene.loc_titles.get(location, location),
             True,
@@ -147,25 +175,24 @@ class WorldMapRenderer:
         surface.blit(
             label,
             (
-                center_x - label.get_width() // 2,
-                center_y + self.node_radius + 12,
+                center[0] - label.get_width() // 2,
+                center[1] + self.node_radius + 12,
             ),
         )
-        if completed:
-            badge = pygame.Surface((28, 28), pygame.SRCALPHA)
-            pygame.draw.circle(badge, (40, 170, 110), (14, 14), 14)
-            pygame.draw.lines(
-                badge, (255, 255, 255), False, [(7, 15), (12, 20), (20, 8)], 3
-            )
-            surface.blit(
-                badge,
-                badge.get_rect(
-                    center=(
-                        center_x + self.node_radius - 14,
-                        center_y - self.node_radius + 14,
-                    )
-                ),
-            )
+
+    def _draw_completion_badge(
+        self, surface: pygame.Surface, center: tuple[int, int]
+    ) -> None:
+        badge = pygame.Surface((28, 28), pygame.SRCALPHA)
+        pygame.draw.circle(badge, (40, 170, 110), (14, 14), 14)
+        pygame.draw.lines(
+            badge, (255, 255, 255), False, [(7, 15), (12, 20), (20, 8)], 3
+        )
+        badge_center = (
+            center[0] + self.node_radius - 14,
+            center[1] - self.node_radius + 14,
+        )
+        surface.blit(badge, badge.get_rect(center=badge_center))
 
     def _draw_mario(self, surface: pygame.Surface, scene: WorldMapView) -> None:
         if not scene.mario_frames or not scene.completed:
