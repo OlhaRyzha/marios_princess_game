@@ -17,8 +17,8 @@ web-build:
 web-check: web-build
 	uv run python scripts/verify_web_build.py
 
-web-serve:
-	uv run pygbag --template pygbag.tmpl --PYBUILD 3.13 --disable-sound-format-error .
+web-serve: web-build
+	uv run python -m http.server 8000 --directory build/web
 
 web-publish: web-build
 	butler push build/web.zip olharyzha/marios-princess:html5
