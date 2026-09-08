@@ -41,10 +41,6 @@ from game.utils.fonts import load_font
 
 
 class DemoScene:
-    @staticmethod
-    def _post_quit_event() -> None:
-        pygame.event.post(pygame.event.Event(pygame.QUIT))
-
     def __init__(
         self,
         screen: "pygame.Surface",
@@ -56,6 +52,7 @@ class DemoScene:
         audio_service: AudioService,
         localizer: Localizer | None = None,
         on_location_completed: Callable[[LocationName], None] | None = None,
+        on_game_finished: Callable[[], None] | None = None,
     ):
         self.screen = screen
         self.time_source = time_source
@@ -110,6 +107,7 @@ class DemoScene:
         self.current_boss: BossConfig | None = None
         self._completion_reported = False
         self._on_location_completed = on_location_completed
+        self._on_game_finished = on_game_finished
         self.boss_preview = BossPreview(
             self.font,
             localizer=self.localizer,
@@ -119,7 +117,6 @@ class DemoScene:
 
         self.victory_modal: VictoryModal | None = None
         self.finale = FinaleCinematic(duration_ms=3200, font_size=FONT_SIZE)
-        self._pending_final_modal: tuple[str, list[str]] | None = None
         self._collectible_hint_timer: float = 0.0
         self._collectible_hint_text: str = ""
 
@@ -228,14 +225,6 @@ class DemoScene:
         else:
             self.finale.ensure_assets()
             self.finale.start(self.time_source.now_ms())
-            self._pending_final_modal = (
-                self.localizer.text("victory.title"),
-                [
-                    self.localizer.text("victory.final_boss"),
-                    self.localizer.text("victory.mario_free"),
-                    self.localizer.text("victory.celebrate"),
-                ],
-            )
             self.mode = SceneMode.FINALE
 
     def _start_boss_fight(self, boss: BossConfig) -> None:
@@ -305,7 +294,6 @@ class DemoScene:
         self.fx_group.empty()
         self.projectiles.empty()
         self.victory_modal = None
-        self._pending_final_modal = None
         self._collectible_hint_timer = 0.0
         self._collectible_hint_text = ""
         self.finale.reset()
@@ -332,19 +320,9 @@ class DemoScene:
         elif self.mode is SceneMode.FINALE:
             now = self.time_source.now_ms()
             if self.finale.ready_for_modal(now):
-                if self._pending_final_modal and self.victory_modal is None:
-                    title, lines = self._pending_final_modal
-                    modal = VictoryModal(
-                        title=title,
-                        lines=lines,
-                        on_continue=self._post_quit_event,
-                        localizer=self.localizer,
-                    )
-                    modal.footer_text = self.localizer.text("victory.finish")
-                    self.victory_modal = modal
-                    self._pending_final_modal = None
                 self.finale.reset()
-                self.mode = SceneMode.VICTORY
+                if self._on_game_finished:
+                    self._on_game_finished()
 
         if self.player.health <= 0:
             self.player.health = self.player.max_health

@@ -92,6 +92,20 @@ def test_controls_and_quit_are_explicit() -> None:
     assert not state.running
 
 
+def test_return_to_menu_clears_active_scene() -> None:
+    state = GameState[object](mode=GameMode.MENU_PAUSE, scene=object())
+    state.scene_load_pending = True
+    state.time_accumulator = 0.5
+    controller = GameController(state)
+
+    controller.handle_menu(MenuAction.RETURN_TO_MENU)
+
+    assert state.mode is GameMode.MENU
+    assert state.scene is None
+    assert not state.scene_load_pending
+    assert state.time_accumulator == 0
+
+
 def test_map_starts_only_unlocked_location() -> None:
     state = GameState[object](mode=GameMode.MAP)
     controller = GameController(state)

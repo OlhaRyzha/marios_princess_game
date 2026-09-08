@@ -9,6 +9,7 @@ class MenuAction(StrEnum):
     OPEN_MAP = "open_map"
     OPEN_CONTROLS = "open_controls"
     RESUME_GAME = "resume_game"
+    RETURN_TO_MENU = "return_to_menu"
     QUIT = "quit"
 
 

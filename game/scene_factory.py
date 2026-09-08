@@ -26,6 +26,7 @@ class SceneFactory:
         location: LocationName,
         *,
         on_location_completed: Callable[[LocationName], None],
+        on_game_finished: Callable[[], None] | None = None,
     ) -> DemoScene:
         return DemoScene(
             self.screen,
@@ -36,4 +37,5 @@ class SceneFactory:
             audio_service=self.audio_service,
             localizer=self.localizer,
             on_location_completed=on_location_completed,
+            on_game_finished=on_game_finished,
         )

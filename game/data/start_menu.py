@@ -11,5 +11,5 @@ PAUSE_MENU_ITEMS: tuple[MenuItem, ...] = (
     MenuItem("menu.resume", MenuAction.RESUME_GAME),
     MenuItem("menu.map", MenuAction.OPEN_MAP),
     MenuItem("menu.controls", MenuAction.OPEN_CONTROLS),
-    MenuItem("menu.quit", MenuAction.QUIT),
+    MenuItem("menu.exit_to_menu", MenuAction.RETURN_TO_MENU),
 )

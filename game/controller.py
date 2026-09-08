@@ -17,6 +17,13 @@ class GameController[SceneT]:
     def stop(self) -> None:
         self.state.running = False
 
+    def return_to_menu(self) -> None:
+        """Leave the active game session and restore the main menu."""
+        self.state.mode = GameMode.MENU
+        self.state.scene = None
+        self.state.scene_load_pending = False
+        self.state.time_accumulator = 0.0
+
     def handle_escape(self) -> bool:
         transitions = {
             GameMode.GAME: GameMode.MENU_PAUSE,
@@ -59,6 +66,9 @@ class GameController[SceneT]:
             return None
         if action is MenuAction.OPEN_CONTROLS:
             return ControllerEffect.OPEN_CONTROLS
+        if action is MenuAction.RETURN_TO_MENU:
+            self.return_to_menu()
+            return None
         if action is MenuAction.QUIT:
             self.stop()
         return None

@@ -66,6 +66,7 @@ def run_frame(
         state.scene = scene_factory.create_game_scene(
             state.progress.pending_location,
             on_location_completed=handle_location_completed,
+            on_game_finished=controller.return_to_menu,
         )
 
     def apply_effect(effect: ControllerEffect | None) -> None:
@@ -95,13 +96,15 @@ def run_frame(
 
     if state.mode is GameMode.GAME:
         if state.scene is not None:
+            active_scene = state.scene
             fixed_step = 1.0 / FPS
             accumulator = state.time_accumulator + dt
             while accumulator >= fixed_step:
-                state.scene.update(fixed_step)
+                active_scene.update(fixed_step)
                 accumulator -= fixed_step
             state.time_accumulator = accumulator
-            state.progress.pending_location = state.scene.location
+            if state.scene is active_scene:
+                state.progress.pending_location = active_scene.location
         else:
             state.time_accumulator = 0.0
     else:

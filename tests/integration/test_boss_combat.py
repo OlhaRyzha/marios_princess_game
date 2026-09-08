@@ -95,3 +95,37 @@ def test_boss_fight_keeps_player_and_boss_inside_viewport(
     assert scene.camera_x == camera_x
     assert scene.player.rect.left >= camera_x + 40
     assert boss.rect.right <= camera_x + scene.boss_arena.viewport_width - 40
+
+
+def test_finale_returns_to_main_menu_after_cinematic(
+    pygame_runtime: None,
+) -> None:
+    screen = pygame.display.get_surface()
+    assert screen is not None
+    time_source = FakeTimeSource()
+    finished = False
+
+    def finish_game() -> None:
+        nonlocal finished
+        finished = True
+
+    scene = SceneFactory(
+        screen=screen,
+        time_source=time_source,
+        input_source=FakeInputSource(),
+        rng=random.Random(2026),
+        audio_service=RecordingAudioService(),
+        localizer=Localizer(),
+    ).create_game_scene(
+        "crystal_caves",
+        on_location_completed=lambda location: None,
+        on_game_finished=finish_game,
+    )
+    scene.mode = SceneMode.FINALE
+    scene.finale.start(time_source.now_ms())
+    time_source.advance(scene.finale.duration_ms)
+
+    scene.update(1 / 60)
+
+    assert finished
+    assert not scene.finale.is_running()
