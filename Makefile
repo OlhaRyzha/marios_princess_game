@@ -1,5 +1,7 @@
 .PHONY: install upgrade run web-build web-check web-serve web-publish format format-check lint typecheck docstrings-check assets-check test coverage check pre-commit-install pre-commit clean
 
+WEB_PORT ?= 8000
+
 install:
 	uv sync
 
@@ -18,7 +20,7 @@ web-check: web-build
 	uv run python scripts/verify_web_build.py
 
 web-serve: web-check
-	uv run python -m http.server 8000 --directory build/web
+	uv run python -m http.server $(WEB_PORT) --directory build/web
 
 web-publish: web-check
 	butler push build/web.zip olharyzha/marios-princess:html5

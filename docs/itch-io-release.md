@@ -32,6 +32,9 @@ make web-serve
 Open `http://localhost:8000`. The command serves the same verified archive that
 will be uploaded to itch.io.
 
+If port 8000 is busy, use `make web-serve WEB_PORT=8001` and open
+`http://localhost:8001`.
+
 ## Publish
 
 Butler is already installed on this Mac. Authenticate once:
