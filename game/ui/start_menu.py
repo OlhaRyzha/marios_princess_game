@@ -24,7 +24,7 @@ ColorTuple = tuple[int, int, int] | tuple[int, int, int, int]
 ColorValue = pygame.Color | ColorTuple
 
 
-def _load_image(path: str) -> pygame.Surface:
+def _load_image(path: str) -> "pygame.Surface":
     try:
         img = pygame.image.load(path).convert_alpha()
     except (FileNotFoundError, OSError, pygame.error) as e:
@@ -34,15 +34,15 @@ def _load_image(path: str) -> pygame.Surface:
     return pygame.transform.smoothscale(img, (WIDTH, HEIGHT))
 
 
-def _as_color(value: ColorValue) -> pygame.Color:
+def _as_color(value: ColorValue) -> "pygame.Color":
     if isinstance(value, pygame.Color):
         return value
     return pygame.Color(*value)
 
 
 def _rounded_rect(
-    surface: pygame.Surface,
-    rect: pygame.Rect,
+    surface: "pygame.Surface",
+    rect: "pygame.Rect",
     color: ColorValue,
     radius: int = 16,
     width: int = 0,
@@ -85,7 +85,7 @@ class StartMenu:
     def open_controls(self) -> None:
         self.controls_open = True
 
-    def _build_button_rects(self) -> list[pygame.Rect]:
+    def _build_button_rects(self) -> "list[pygame.Rect]":
         cx = WIDTH // 2
         total_h = len(self.items) * self.btn_h + (len(self.items) - 1) * self.btn_gap
         top = HEIGHT // 2 - total_h // 2 + 20
@@ -99,7 +99,7 @@ class StartMenu:
             y += self.btn_h + self.btn_gap
         return rects
 
-    def _draw_title(self, surface: pygame.Surface) -> None:
+    def _draw_title(self, surface: "pygame.Surface") -> None:
         t_shadow = self.font_title.render(TITLE_TEXT, True, (255, 180, 200))
         t_fill = self.font_title.render(TITLE_TEXT, True, (255, 255, 255))
         x = WIDTH // 2 - t_fill.get_width() // 2
@@ -107,7 +107,7 @@ class StartMenu:
         surface.blit(t_fill, (x, TITLE_Y))
 
     def _draw_button(
-        self, surface: pygame.Surface, rect: pygame.Rect, label: str, selected: bool
+        self, surface: "pygame.Surface", rect: "pygame.Rect", label: str, selected: bool
     ) -> None:
 
         _rounded_rect(surface, rect.move(0, 6), pygame.Color(0, 0, 0, 80), 18)
@@ -135,7 +135,7 @@ class StartMenu:
             (rect.centerx - txt.get_width() // 2, rect.centery - txt.get_height() // 2),
         )
 
-    def _draw_hints(self, surface: pygame.Surface) -> None:
+    def _draw_hints(self, surface: "pygame.Surface") -> None:
         hint = self.localizer.text("menu.hint")
         s1 = self.font_hint.render(hint, True, (100, 70, 80))
         s2 = self.font_hint.render(hint, True, (255, 235, 240))
@@ -144,7 +144,7 @@ class StartMenu:
         surface.blit(s1, (x + 2, y + 2))
         surface.blit(s2, (x, y))
 
-    def _draw_controls_modal(self, surface: pygame.Surface) -> None:
+    def _draw_controls_modal(self, surface: "pygame.Surface") -> None:
         dim = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
         dim.fill((0, 0, 0, 100))
         surface.blit(dim, (0, 0))
@@ -187,7 +187,7 @@ class StartMenu:
             ),
         )
 
-    def handle_event(self, e: pygame.event.Event) -> MenuAction | None:
+    def handle_event(self, e: "pygame.event.Event") -> MenuAction | None:
         if self.controls_open:
             if e.type == pygame.KEYDOWN and e.key in (pygame.K_RETURN, pygame.K_ESCAPE):
                 self.controls_open = False
@@ -221,7 +221,7 @@ class StartMenu:
 
         return None
 
-    def draw(self, surface: pygame.Surface) -> None:
+    def draw(self, surface: "pygame.Surface") -> None:
         surface.blit(self.bg, (0, 0))
 
         overlay = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)

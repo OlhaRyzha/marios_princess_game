@@ -13,7 +13,7 @@ from game.ui.world_map import WorldMapScene
 
 
 class EventScene(Protocol):
-    def handle_event(self, event: pygame.event.Event) -> None: ...
+    def handle_event(self, event: "pygame.event.Event") -> None: ...
 
 
 class InputAdapter[SceneT: EventScene]:
@@ -38,7 +38,7 @@ class InputAdapter[SceneT: EventScene]:
         self.is_web = is_web
         self.toggle_fullscreen = toggle_fullscreen
 
-    def route(self, event: pygame.event.Event) -> ControllerEffect | None:
+    def route(self, event: "pygame.event.Event") -> ControllerEffect | None:
         state = self.controller.state
         if state.mode is GameMode.GAME:
             self.input_source.handle_event(event)

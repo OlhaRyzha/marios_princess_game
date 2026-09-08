@@ -2,8 +2,6 @@ from collections.abc import Callable
 from typing import Protocol, cast
 
 import pygame
-from pygame.mask import Mask
-from pygame.math import Vector2
 
 from game.core.collision import collide_mask
 from game.core.effects import HitSpark
@@ -18,11 +16,11 @@ from game.utils.constants import (
 
 
 class PlayerSprite(Protocol):
-    rect: pygame.Rect
+    rect: "pygame.Rect"
     state: str
     dir: int
-    pos: Vector2
-    mask: Mask
+    pos: "pygame.Vector2"
+    mask: "pygame.Mask"
 
     def take_damage(self, amount: int = ...) -> None: ...
 
@@ -32,8 +30,8 @@ class PlayerSprite(Protocol):
 
 
 class BossSprite(Protocol):
-    rect: pygame.Rect
-    mask: Mask
+    rect: "pygame.Rect"
+    mask: "pygame.Mask"
     health: int
 
     def kill(self) -> None: ...
@@ -42,7 +40,7 @@ class BossSprite(Protocol):
 
 
 class ProjectileSprite(Protocol):
-    rect: pygame.Rect
+    rect: "pygame.Rect"
 
     def kill(self) -> None: ...
 
@@ -52,9 +50,9 @@ class CombatSystem:
     def __init__(
         self,
         player: PlayerSprite,
-        boss_group: pygame.sprite.Group,
-        projectiles: pygame.sprite.Group,
-        fx_group: pygame.sprite.Group,
+        boss_group: "pygame.sprite.Group",
+        projectiles: "pygame.sprite.Group",
+        fx_group: "pygame.sprite.Group",
         *,
         time_source: TimeSource,
         heart_cooldown_ms: int = ATTACK_HIT_COOLDOWN_MS,

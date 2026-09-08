@@ -18,7 +18,7 @@ class BossPreview:
 
     def __init__(
         self,
-        font: pygame.font.Font,
+        font: "pygame.font.Font",
         localizer: Localizer | None = None,
         on_select: Callable[[BossConfig], None] | None = None,
     ):
@@ -40,7 +40,7 @@ class BossPreview:
     def is_done(self) -> bool:
         return not self.active
 
-    def _wrap(self, text: str, max_w: int) -> list[pygame.Surface]:
+    def _wrap(self, text: str, max_w: int) -> "list[pygame.Surface]":
         words = text.split()
         lines: list[str] = []
         cur = ""
@@ -56,7 +56,7 @@ class BossPreview:
             lines.append(cur)
         return [self.font.render(line, True, (25, 25, 25)) for line in lines]
 
-    def handle_key(self, event: pygame.event.Event):
+    def handle_key(self, event: "pygame.event.Event"):
         if not self.active:
             return
         if event.type == pygame.KEYDOWN:
@@ -73,7 +73,7 @@ class BossPreview:
             elif event.key == pygame.K_ESCAPE:
                 self.active = False
 
-    def draw(self, surface: pygame.Surface):
+    def draw(self, surface: "pygame.Surface"):
         if not self.active or not self._items:
             return
         data = self._items[self._idx]

@@ -8,7 +8,7 @@ from game.utils.paths import resolve_project_path
 logger = logging.getLogger(__name__)
 
 
-def load_image(path: str | Path, *, convert_alpha: bool = True) -> pygame.Surface:
+def load_image(path: str | Path, *, convert_alpha: bool = True) -> "pygame.Surface":
     resolved_path = resolve_project_path(path)
     try:
         img = pygame.image.load(resolved_path)
@@ -21,7 +21,7 @@ def load_image(path: str | Path, *, convert_alpha: bool = True) -> pygame.Surfac
         return surf
 
 
-def scale_to_height(img: pygame.Surface, target_h: int) -> pygame.Surface:
+def scale_to_height(img: "pygame.Surface", target_h: int) -> "pygame.Surface":
     w, h = img.get_size()
     if h == 0:
         return img

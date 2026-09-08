@@ -39,7 +39,7 @@ class LocationLayout(TypedDict):
     fore: LayerLayout
 
 
-def _scale_to_height(img: pygame.Surface, target_h: int | None) -> pygame.Surface:
+def _scale_to_height(img: "pygame.Surface", target_h: int | None) -> "pygame.Surface":
     if not target_h:
         return img
     w, h = img.get_size()
@@ -81,7 +81,7 @@ class ParallaxBackground:
 
         self.cfg: LocationPreset = presets[location]
 
-    def draw(self, surface: pygame.Surface, cam_x: float) -> None:
+    def draw(self, surface: "pygame.Surface", cam_x: float) -> None:
 
         surface.blit(pygame.transform.smoothscale(self.sky, (WIDTH, HEIGHT)), (0, 0))
 
@@ -119,8 +119,8 @@ class ParallaxBackground:
 
     def _blit_tiled(
         self,
-        surface: pygame.Surface,
-        img: pygame.Surface,
+        surface: "pygame.Surface",
+        img: "pygame.Surface",
         cam_x: float,
         *,
         speed: float,
@@ -147,7 +147,7 @@ class ParallaxBackground:
             x += w
             flip = not flip if tile == "mirror" else False
 
-    def _draw_ground(self, surface: pygame.Surface) -> None:
+    def _draw_ground(self, surface: "pygame.Surface") -> None:
         theme = GROUND_THEMES.get(self.location, GROUND_THEMES["sunny_meadows"])
         soil_base = theme["soil_base"]
         grass_top = theme["grass_top"]

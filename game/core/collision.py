@@ -4,7 +4,7 @@ import pygame
 
 
 class CollisionSprite(Protocol):
-    rect: pygame.Rect
+    rect: "pygame.Rect"
 
 
 def collide_mask(a: CollisionSprite, b: CollisionSprite) -> bool:

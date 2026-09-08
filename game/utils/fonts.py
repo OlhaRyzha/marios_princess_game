@@ -38,7 +38,7 @@ def _resolve_font_path() -> str | None:
     return None
 
 
-def load_font(size: int, *, bold: bool = False) -> pygame.font.Font:
+def load_font(size: int, *, bold: bool = False) -> "pygame.font.Font":
     path = _resolve_font_path()
     if path:
         return pygame.font.Font(path, size)

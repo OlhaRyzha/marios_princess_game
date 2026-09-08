@@ -97,7 +97,7 @@ class BossActor(pygame.sprite.Sprite):
 
         self.mask = pygame.mask.from_surface(self.image)
 
-    def draw(self, surface: pygame.Surface, camera_x: float) -> None:
+    def draw(self, surface: "pygame.Surface", camera_x: float) -> None:
         img: pygame.Surface = self.image
         if self.dir < 0:
             img = pygame.transform.flip(img, True, False)

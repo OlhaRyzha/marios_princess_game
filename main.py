@@ -1,3 +1,7 @@
+# /// script
+# dependencies = ["pygame-ce"]
+# ///
+
 from game.app import run_game
 
 

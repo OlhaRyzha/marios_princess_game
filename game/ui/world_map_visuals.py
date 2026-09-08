@@ -50,7 +50,7 @@ class MapFog:
 
     def draw(
         self,
-        surface: pygame.Surface,
+        surface: "pygame.Surface",
         location: LocationName,
         center: tuple[int, int],
         intensity: float,
@@ -108,7 +108,7 @@ def make_bubble_surface(
     palette: tuple[tuple[int, int, int], tuple[int, int, int]],
     *,
     brightness: float = 1.0,
-) -> pygame.Surface:
+) -> "pygame.Surface":
     diameter = radius * 2
     surface = pygame.Surface((diameter, diameter), pygame.SRCALPHA)
     outer_color = scale_color(palette[0], brightness)
@@ -157,7 +157,7 @@ def make_bubble_surface(
     return surface
 
 
-def circle_image(image: pygame.Surface, radius: int) -> pygame.Surface:
+def circle_image(image: "pygame.Surface", radius: int) -> "pygame.Surface":
     size = radius * 2
     scaled_image = pygame.transform.smoothscale(image, (size, size))
     circle = pygame.Surface((size, size), pygame.SRCALPHA)

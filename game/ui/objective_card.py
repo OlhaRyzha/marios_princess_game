@@ -27,7 +27,7 @@ class ObjectiveCard:
     def __init__(
         self,
         *,
-        font: pygame.font.Font,
+        font: "pygame.font.Font",
         objectives: Mapping[LocationName, ObjectiveConfig],
         localizer: Localizer,
     ) -> None:
@@ -37,7 +37,7 @@ class ObjectiveCard:
 
     def draw(
         self,
-        surface: pygame.Surface,
+        surface: "pygame.Surface",
         location: LocationName,
         *,
         locked: bool,
