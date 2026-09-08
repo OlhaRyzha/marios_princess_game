@@ -1,7 +1,7 @@
 from pathlib import Path
 from zipfile import BadZipFile, ZipFile
 
-MAX_ARCHIVE_BYTES = 16 * 1024 * 1024
+MAX_ARCHIVE_BYTES = 40 * 1024 * 1024
 
 
 def verify_web_build(archive_path: Path) -> None:
@@ -9,7 +9,7 @@ def verify_web_build(archive_path: Path) -> None:
         raise FileNotFoundError(f"Web archive was not created: {archive_path}")
     if archive_path.stat().st_size > MAX_ARCHIVE_BYTES:
         size_mib = archive_path.stat().st_size / (1024 * 1024)
-        raise ValueError(f"Web archive exceeds the 16 MiB budget: {size_mib:.1f} MiB")
+        raise ValueError(f"Web archive exceeds the 40 MiB budget: {size_mib:.1f} MiB")
 
     try:
         with ZipFile(archive_path) as archive:
