@@ -2,7 +2,7 @@ import random
 
 import pygame
 
-from game.core.effects import ConfettiBurst, HitSpark
+from game.gameplay.effects import ConfettiBurst, HitSpark
 from game.utils.constants import CONFETTI_TIME_MS, HIT_SPARK_TIME_MS
 from tests.factories.time import FakeTimeSource
 

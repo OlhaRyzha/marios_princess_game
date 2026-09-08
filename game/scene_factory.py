@@ -4,9 +4,9 @@ from dataclasses import dataclass
 
 import pygame
 
-from game.core.demo_scene import DemoScene
 from game.data.locations import LocationName
 from game.i18n import Localizer
+from game.scenes.demo_scene import DemoScene
 from game.services.audio import AudioService
 from game.systems.input_state import InputSource
 from game.systems.time_source import TimeSource

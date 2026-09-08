@@ -8,7 +8,6 @@ import pygame
 
 from game.actions import MenuItem
 from game.controller import ControllerEffect, GameController
-from game.core.demo_scene import DemoScene
 from game.data.bosses import BOSS_ROSTER
 from game.data.locations import LocationName
 from game.data.objectives import CONTROLS, OBJECTIVES
@@ -17,6 +16,7 @@ from game.frame_renderer import FrameRenderer
 from game.i18n import Localizer
 from game.input_adapter import InputAdapter
 from game.scene_factory import SceneFactory
+from game.scenes.demo_scene import DemoScene
 from game.services.audio import PygameAudioService
 from game.services.progress import (
     ProgressSnapshot,

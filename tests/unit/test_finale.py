@@ -1,6 +1,6 @@
 import pygame
 
-from game.core.finale import FinaleCinematic
+from game.scenes.finale import FinaleCinematic
 
 
 def test_finale_becomes_ready_after_duration(pygame_runtime: None) -> None:

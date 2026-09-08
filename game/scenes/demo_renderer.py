@@ -2,11 +2,11 @@ from typing import Protocol
 
 import pygame
 
-from game.core.background import ParallaxBackground
-from game.core.collectible_system import CollectibleSystem
-from game.core.finale import FinaleCinematic
-from game.core.player import Princess
+from game.gameplay.collectible_system import CollectibleSystem
+from game.gameplay.player import Princess
 from game.i18n import Localizer
+from game.presentation.background import ParallaxBackground
+from game.scenes.finale import FinaleCinematic
 from game.state import SceneMode
 from game.ui.boss_preview import BossPreview
 from game.ui.hud import HealthHUD

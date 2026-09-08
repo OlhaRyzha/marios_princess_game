@@ -1,4 +1,4 @@
-from game.core.collision import collide_mask
+from game.gameplay.collision import collide_mask
 from tests.factories.sprites import make_masked_sprite
 
 

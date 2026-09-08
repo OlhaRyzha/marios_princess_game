@@ -4,7 +4,6 @@ from typing import cast
 
 import pygame
 
-from game.core.obstacle import Anchor, Obstacle
 from game.data.blocks import (
     CAVES_BLOCKS,
     MEADOWS_BLOCKS,
@@ -17,6 +16,7 @@ from game.data.locations import (
     LocationName,
     crawl_gap,
 )
+from game.levels.obstacle import Anchor, Obstacle
 from game.utils.constants import LEVEL_WIDTH, OBSTACLE_SCALE
 
 

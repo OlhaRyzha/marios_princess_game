@@ -3,10 +3,10 @@ from collections.abc import Callable
 
 import pygame
 
-from game.core.effects import ConfettiBurst
-from game.core.finale import FinaleCinematic
 from game.data.locations import NEXT_LOCATION, LocationName
+from game.gameplay.effects import ConfettiBurst
 from game.i18n import Localizer
+from game.scenes.finale import FinaleCinematic
 from game.services.audio import AudioService
 from game.state import SceneMode
 from game.systems.time_source import TimeSource

@@ -2,9 +2,9 @@ import random
 
 import pygame
 
-from game.core.collectible import Collectible
 from game.data.collectibles import COLLECTIBLE_SETS, CollectibleSet
 from game.data.locations import LocationName
+from game.gameplay.collectible import Collectible
 from game.i18n import Localizer
 from game.utils.images import scale_to_height
 from game.utils.paths import resolve_project_path

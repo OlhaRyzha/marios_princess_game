@@ -1,6 +1,6 @@
 import random
 
-from game.core.collectible_system import CollectibleSystem
+from game.gameplay.collectible_system import CollectibleSystem
 from game.i18n import Language, Localizer
 
 

@@ -1,8 +1,8 @@
 from dataclasses import dataclass
 
-from game.core.boss_actor import BossActor
-from game.core.player import Princess
+from game.combat.boss_actor import BossActor
 from game.data.bosses import BossConfig
+from game.gameplay.player import Princess
 from game.systems.time_source import TimeSource
 
 

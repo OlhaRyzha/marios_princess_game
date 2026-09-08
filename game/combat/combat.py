@@ -3,9 +3,9 @@ from typing import Protocol, cast
 
 import pygame
 
-from game.core.collision import collide_mask
-from game.core.effects import HitSpark
-from game.core.heart_projectile import HeartProjectile
+from game.combat.heart_projectile import HeartProjectile
+from game.gameplay.collision import collide_mask
+from game.gameplay.effects import HitSpark
 from game.systems.time_source import TimeSource
 from game.utils.constants import (
     ATTACK_DAMAGE,

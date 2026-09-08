@@ -1,4 +1,4 @@
-from game.core.camera import LevelCamera
+from game.presentation.camera import LevelCamera
 
 
 def test_camera_follows_target_and_stays_inside_level() -> None:

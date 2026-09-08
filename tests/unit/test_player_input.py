@@ -1,6 +1,6 @@
 import pytest
 
-from game.core.player import Princess
+from game.gameplay.player import Princess
 from game.systems.input_state import InputState
 from game.utils.constants import GRAVITY, GROUND_Y, JUMP_V, SPEED_RUN, SPEED_WALK
 from tests.factories.time import FakeTimeSource

@@ -4,17 +4,17 @@ from typing import cast
 
 import pygame
 
-from game.core.background import ParallaxBackground
-from game.core.boss_actor import BossActor
-from game.core.boss_arena import BossArena
-from game.core.camera import LevelCamera
-from game.core.combat import CombatSystem
-from game.core.demo_level import DemoLevel
-from game.core.demo_progression import DemoProgression
-from game.core.demo_renderer import DemoRenderer
+from game.combat.boss_actor import BossActor
+from game.combat.boss_arena import BossArena
+from game.combat.combat import CombatSystem
 from game.data.bosses import BOSS_ROSTER, BossConfig
 from game.data.locations import LocationName
 from game.i18n import Localizer
+from game.levels.demo_level import DemoLevel
+from game.presentation.background import ParallaxBackground
+from game.presentation.camera import LevelCamera
+from game.scenes.demo_progression import DemoProgression
+from game.scenes.demo_renderer import DemoRenderer
 from game.services.audio import AudioService
 from game.state import SceneMode
 from game.systems.input_state import InputSource

@@ -1,6 +1,6 @@
 import random
 
-from game.core.obstacle_factory import boss_gate_position, build_obstacles
+from game.levels.obstacle_factory import boss_gate_position, build_obstacles
 from game.utils.constants import LEVEL_WIDTH
 
 

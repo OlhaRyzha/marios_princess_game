@@ -78,7 +78,11 @@ game/
 ├── input_adapter.py   # keyboard and window events
 ├── frame_renderer.py  # scene rendering
 ├── scene_factory.py   # scene construction
-├── core/              # gameplay objects and combat
+├── gameplay/          # player, collectibles, collisions, and effects
+├── combat/            # bosses, arena rules, attacks, and projectiles
+├── levels/            # level composition and obstacles
+├── scenes/            # gameplay scene, progression, rendering, and finale
+├── presentation/      # backgrounds and camera
 ├── data/              # immutable game configuration
 ├── services/          # audio and external adapters
 ├── systems/           # time, input, and animation abstractions

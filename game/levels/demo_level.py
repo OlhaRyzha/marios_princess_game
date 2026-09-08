@@ -3,13 +3,13 @@ from typing import cast
 
 import pygame
 
-from game.core.collectible_system import CollectibleSystem
-from game.core.collision import CollisionSprite, collide_mask
-from game.core.effects import HitSpark
-from game.core.obstacle_factory import boss_gate_position, build_obstacles
-from game.core.player import Princess
 from game.data.locations import LocationName
+from game.gameplay.collectible_system import CollectibleSystem
+from game.gameplay.collision import CollisionSprite, collide_mask
+from game.gameplay.effects import HitSpark
+from game.gameplay.player import Princess
 from game.i18n import Localizer
+from game.levels.obstacle_factory import boss_gate_position, build_obstacles
 from game.state import SceneMode
 from game.systems.time_source import TimeSource
 from game.utils.constants import DAMAGE_PER_HIT, GROUND_Y, OBSTACLE_SCALE

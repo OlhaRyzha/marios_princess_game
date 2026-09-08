@@ -2,8 +2,8 @@ import pygame
 import pytest
 
 from game.app import GameRuntime
-from game.core.demo_scene import DemoScene
 from game.data.start_menu import PAUSE_MENU_ITEMS
+from game.scenes.demo_scene import DemoScene
 from game.state import GameMode
 
 
