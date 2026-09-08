@@ -64,11 +64,16 @@ def run_frame(
         update_world_map_progress()
         save_progress()
 
+    def handle_game_finished() -> None:
+        controller.finish_game()
+        update_world_map_progress()
+        save_progress()
+
     def start_scene() -> None:
         state.scene = scene_factory.create_game_scene(
             state.progress.pending_location,
             on_location_completed=handle_location_completed,
-            on_game_finished=controller.return_to_menu,
+            on_game_finished=handle_game_finished,
         )
 
     def apply_effect(effect: ControllerEffect | None) -> None:

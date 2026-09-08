@@ -24,6 +24,11 @@ class GameController[SceneT]:
         self.state.scene_load_pending = False
         self.state.time_accumulator = 0.0
 
+    def finish_game(self) -> None:
+        """Finish the playthrough and prepare a new game from level one."""
+        self.state.progress.reset()
+        self.return_to_menu()
+
     def handle_escape(self) -> bool:
         transitions = {
             GameMode.GAME: GameMode.MENU_PAUSE,

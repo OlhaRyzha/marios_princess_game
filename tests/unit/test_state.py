@@ -10,6 +10,20 @@ def test_new_progress_starts_at_first_location() -> None:
     assert progress.pending_location == LOCATION_ORDER[0]
 
 
+def test_progress_reset_starts_a_new_playthrough() -> None:
+    progress = Progress(
+        unlocked=set(LOCATION_ORDER),
+        completed=set(LOCATION_ORDER),
+        pending_location=LOCATION_ORDER[-1],
+    )
+
+    progress.reset()
+
+    assert progress.unlocked == {LOCATION_ORDER[0]}
+    assert progress.completed == set()
+    assert progress.pending_location == LOCATION_ORDER[0]
+
+
 def test_complete_unlocks_and_selects_next_location() -> None:
     progress = Progress()
 

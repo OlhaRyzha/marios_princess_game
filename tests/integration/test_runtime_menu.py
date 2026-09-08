@@ -32,6 +32,38 @@ def test_main_menu_starts_game_scene(game_runtime: GameRuntime) -> None:
     assert game_runtime.state.scene.audio_service is game_runtime.audio_service
 
 
+def test_new_game_after_finale_starts_from_first_location(
+    game_runtime: GameRuntime,
+) -> None:
+    pygame.event.post(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_RETURN))
+    game_runtime.tick()
+    game_runtime.tick()
+    scene = game_runtime.state.scene
+    assert scene is not None
+
+    game_runtime.state.progress.unlocked.update(("mushroom_woods", "crystal_caves"))
+    game_runtime.state.progress.completed.update(
+        ("sunny_meadows", "mushroom_woods", "crystal_caves")
+    )
+    game_runtime.state.progress.pending_location = "crystal_caves"
+    assert scene.progression.on_game_finished is not None
+
+    scene.progression.on_game_finished()
+
+    assert game_runtime.state.mode is GameMode.MENU
+    assert game_runtime.state.progress.pending_location == "sunny_meadows"
+    saved_progress = game_runtime.progress_store.load()
+    assert saved_progress is not None
+    assert saved_progress.pending_location == "sunny_meadows"
+
+    pygame.event.post(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_RETURN))
+    game_runtime.tick()
+    game_runtime.tick()
+
+    assert game_runtime.state.scene is not None
+    assert game_runtime.state.scene.location == "sunny_meadows"
+
+
 def test_controls_modal_closes_without_leaving_menu(
     game_runtime: GameRuntime,
 ) -> None:

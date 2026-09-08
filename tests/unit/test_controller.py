@@ -106,6 +106,22 @@ def test_return_to_menu_clears_active_scene() -> None:
     assert state.time_accumulator == 0
 
 
+def test_finish_game_resets_progress_before_returning_to_menu() -> None:
+    state = GameState[object](mode=GameMode.GAME, scene=object())
+    state.progress.unlocked.update(("mushroom_woods", "crystal_caves"))
+    state.progress.completed.update(("sunny_meadows", "mushroom_woods"))
+    state.progress.pending_location = "crystal_caves"
+    controller = GameController(state)
+
+    controller.finish_game()
+
+    assert state.mode is GameMode.MENU
+    assert state.scene is None
+    assert state.progress.unlocked == {"sunny_meadows"}
+    assert state.progress.completed == set()
+    assert state.progress.pending_location == "sunny_meadows"
+
+
 def test_map_starts_only_unlocked_location() -> None:
     state = GameState[object](mode=GameMode.MAP)
     controller = GameController(state)

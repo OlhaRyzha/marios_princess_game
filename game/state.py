@@ -25,6 +25,12 @@ class Progress:
     completed: set[LocationName] = field(default_factory=set[LocationName])
     pending_location: LocationName = LOCATION_ORDER[0]
 
+    def reset(self) -> None:
+        """Start a new playthrough from the first location."""
+        self.unlocked = {LOCATION_ORDER[0]}
+        self.completed.clear()
+        self.pending_location = LOCATION_ORDER[0]
+
     def complete(self, location: LocationName) -> bool:
         """Complete a location and unlock the next one exactly once."""
         if location in self.completed:
