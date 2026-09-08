@@ -1,4 +1,3 @@
-import math
 import os
 import random
 from collections.abc import Iterable, Mapping
@@ -12,8 +11,9 @@ from game.data.objectives import ObjectiveConfig
 from game.i18n import Localizer
 from game.systems.time_source import TimeSource
 from game.ui.objective_card import ObjectiveCard
+from game.ui.world_map_renderer import WorldMapRenderer
 from game.ui.world_map_state import WorldMapState
-from game.ui.world_map_visuals import MapFog, circle_image, make_bubble_surface
+from game.ui.world_map_visuals import MapFog, make_bubble_surface
 from game.utils.constants import (
     ASSETS_DIR,
     BACKGROUNDS_DIR,
@@ -181,6 +181,13 @@ class WorldMapScene:
             time_source=self.time_source,
             radius=NODE_RADIUS,
         )
+        self.renderer = WorldMapRenderer(
+            positions=LOC_POS,
+            node_radius=NODE_RADIUS,
+            node_halo=NODE_HALO,
+            boss_thumb_radius=BOSS_THUMB_RADIUS,
+            fog_intensity=FOG_INTENSITY,
+        )
 
     @property
     def locations(self) -> list[LocationName]:
@@ -238,16 +245,6 @@ class WorldMapScene:
         )
         return surf
 
-    def _current_mario_pos(self) -> tuple[int, int] | None:
-        mario_location = self.state.mario_location
-        if mario_location is None:
-            return None
-        anchor = LOC_POS.get(mario_location)
-        if anchor is None:
-            return None
-        ax, ay = anchor
-        return (ax, ay - NODE_RADIUS - 12)
-
     def _loc_under_mouse(self, pos: tuple[int, int]) -> LocationName | None:
         for loc, rect in self.node_rects.items():
             if rect.collidepoint(pos):
@@ -256,15 +253,6 @@ class WorldMapScene:
                 if (dx * dx + dy * dy) <= (NODE_RADIUS * NODE_RADIUS):
                     return loc
         return None
-
-    def _bubble_state(self, loc: LocationName, selected: bool) -> str:
-        if loc not in self.unlocked:
-            return "locked"
-        if selected:
-            return "selected"
-        if loc in self.completed:
-            return "completed"
-        return "idle"
 
     def handle_event(self, e: "pygame.event.Event") -> MapEvent | None:
 
@@ -299,129 +287,8 @@ class WorldMapScene:
 
         return None
 
-    def _draw_links(self, surface: "pygame.Surface") -> None:
-
-        if len(self.locations) < 2:
-            return
-
-        centers = [pygame.math.Vector2(LOC_POS[loc]) for loc in self.locations]
-        for start, end in zip(centers, centers[1:], strict=False):
-            delta = end - start
-            length = delta.length()
-            if length <= NODE_RADIUS * 2:
-                continue
-            direction = delta.normalize()
-            start_point = start + direction * NODE_RADIUS
-            end_point = end - direction * NODE_RADIUS
-            pygame.draw.line(surface, (255, 255, 255), start_point, end_point, 2)
-            pygame.draw.aaline(surface, (255, 200, 240), start_point, end_point)
-
-    def _draw_node(
-        self, surface: "pygame.Surface", loc: LocationName, selected: bool
-    ) -> None:
-        cx, cy = LOC_POS[loc]
-        unlocked = loc in self.unlocked
-        completed = loc in self.completed
-
-        if selected:
-            halo = pygame.Surface((NODE_RADIUS * 4, NODE_RADIUS * 4), pygame.SRCALPHA)
-            halo_color = (255, 220, 250, 90) if unlocked else (200, 210, 230, 70)
-            pygame.draw.circle(
-                halo,
-                halo_color,
-                (halo.get_width() // 2, halo.get_height() // 2),
-                NODE_RADIUS + NODE_HALO,
-            )
-            surface.blit(
-                halo, (cx - halo.get_width() // 2, cy - halo.get_height() // 2)
-            )
-
-        state = self._bubble_state(loc, selected)
-        bubble_surface = self._bubble_surfaces[state]
-        surface.blit(bubble_surface, bubble_surface.get_rect(center=(cx, cy)))
-
-        intensity = FOG_INTENSITY.get(state, 0.75)
-        if selected and state != "locked":
-            intensity += 0.1
-        self.fog.draw(surface, loc, (cx, cy), intensity)
-
-        pygame.draw.circle(surface, (255, 255, 255), (cx, cy), NODE_RADIUS, 4)
-        pygame.draw.circle(surface, (255, 245, 252), (cx, cy), NODE_RADIUS - 3, 2)
-
-        if selected:
-            img = self.boss_thumbs_img.get(loc)
-            if img:
-                icon = circle_image(img, BOSS_THUMB_RADIUS)
-                surface.blit(
-                    icon, (cx - icon.get_width() // 2, cy - icon.get_height() // 2)
-                )
-
-        if not unlocked:
-            mask = pygame.Surface((NODE_DIAMETER, NODE_DIAMETER), pygame.SRCALPHA)
-            pygame.draw.circle(
-                mask,
-                (25, 25, 35, 150),
-                (NODE_RADIUS, NODE_RADIUS),
-                NODE_RADIUS,
-            )
-            surface.blit(mask, mask.get_rect(center=(cx, cy)))
-
-        label = self.loc_titles.get(loc, loc)
-        label_color = (255, 255, 255) if unlocked else (170, 170, 175)
-        label_surf = self.font_label.render(label, True, label_color)
-        lx = cx - label_surf.get_width() // 2
-        ly = cy + NODE_RADIUS + 12
-        surface.blit(label_surf, (lx, ly))
-
-        if completed:
-            badge = pygame.Surface((28, 28), pygame.SRCALPHA)
-            pygame.draw.circle(badge, (40, 170, 110), (14, 14), 14)
-            pygame.draw.lines(
-                badge, (255, 255, 255), False, [(7, 15), (12, 20), (20, 8)], 3
-            )
-            surface.blit(
-                badge,
-                badge.get_rect(center=(cx + NODE_RADIUS - 14, cy - NODE_RADIUS + 14)),
-            )
-
-    def _draw_mario(self, surface: "pygame.Surface") -> None:
-        if not self.mario_frames or not self.completed:
-            return
-        pos = self._current_mario_pos()
-        if pos is None:
-            return
-        now = self.time_source.now_ms()
-        frame_idx = (now // self._mario_frame_ms) % len(self.mario_frames)
-        frame = self.mario_frames[frame_idx]
-        bob = int(3 * math.sin(now / 260.0))
-        draw_y = pos[1] + bob
-        if self._mario_shadow:
-            shadow_rect = self._mario_shadow.get_rect(center=(pos[0], pos[1] + 22))
-            surface.blit(self._mario_shadow, shadow_rect)
-        surface.blit(frame, frame.get_rect(midbottom=(pos[0], draw_y)))
-
     def draw(self, surface: "pygame.Surface", *, overlay: bool) -> None:
-
-        surface.blit(self.bg, (0, 0))
-
-        if overlay:
-            dim = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
-            dim.fill((0, 0, 0, 90))
-            surface.blit(dim, (0, 0))
-
-        self._draw_links(surface)
-
-        for i, loc in enumerate(self.locations):
-            self._draw_node(surface, loc, selected=(i == self.selected_idx))
-
-        self._draw_mario(surface)
-
-        location = self.locations[self.selected_idx]
-        self.objective_card.draw(
-            surface,
-            location,
-            locked=location not in self.unlocked,
-        )
+        self.renderer.draw(surface, self, overlay=overlay)
 
     def set_progress(
         self, *, unlocked: Iterable[LocationName], completed: Iterable[LocationName]
